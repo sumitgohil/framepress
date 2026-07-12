@@ -71,7 +71,6 @@ pub fn run() {
             commands::ping,
             commands::version,
             commands::show_main_window,
-            commands::initialize_macos_popover,
             commands::optimize_paths,
             commands::optimize_one,
             commands::cancel_job,
@@ -97,7 +96,7 @@ fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
 }
 
 fn build_widget_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
-    WebviewWindowBuilder::new(app, "widget", WebviewUrl::App("widget".into()))
+    let builder = WebviewWindowBuilder::new(app, "widget", WebviewUrl::App("widget".into()))
         .title("TinyDrop")
         .inner_size(400.0, 720.0)
         .min_inner_size(360.0, 620.0)
@@ -105,39 +104,29 @@ fn build_widget_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
         .decorations(false)
         .always_on_top(true)
         .skip_taskbar(true)
-        .visible(false)
-        .build()
+        .visible(false);
+
+    #[cfg(target_os = "macos")]
+    let builder = builder.on_page_load(|window, _| {
+        if MACOS_POPOVER_INITIALIZED.swap(true, Ordering::AcqRel) {
+            return;
+        }
+
+        // The webview must be fully loaded before it is moved into NSPopover.
+        // Moving it during setup lets Wry reattach it to the hidden host window,
+        // which is what caused the duplicate grey panel.
+        window.to_popover(ToPopoverOptions {
+            is_fullsize_content: true,
+        });
+    });
+
+    builder.build()
 }
 
 #[cfg(target_os = "macos")]
 fn prepare_macos_popover_host(app: &AppHandle) -> tauri::Result<()> {
     let window = build_widget_window(app)?;
     window.hide()?;
-    Ok(())
-}
-
-#[cfg(target_os = "macos")]
-pub fn initialize_macos_popover(app: AppHandle) -> Result<(), String> {
-    if MACOS_POPOVER_INITIALIZED.swap(true, Ordering::AcqRel) {
-        return Ok(());
-    }
-
-    let Some(window) = app.get_webview_window("widget") else {
-        MACOS_POPOVER_INITIALIZED.store(false, Ordering::Release);
-        return Err("widget window is unavailable".to_string());
-    };
-
-    // Moving the webview after Svelte mounts prevents Wry from reattaching it
-    // to the hidden host window and leaving a second, blank panel on screen.
-    window.to_popover(ToPopoverOptions {
-        is_fullsize_content: true,
-    });
-    app.show_popover();
-    Ok(())
-}
-
-#[cfg(not(target_os = "macos"))]
-pub fn initialize_macos_popover() -> Result<(), String> {
     Ok(())
 }
 

@@ -23,11 +23,6 @@ export async function showMainWindow(): Promise<void> {
   return invoke<void>('show_main_window');
 }
 
-/** Initialize the native tray popover after the compact widget has mounted. */
-export async function initializeMacosPopover(): Promise<void> {
-  return invoke<void>('initialize_macos_popover');
-}
-
 /**
  * Enqueue a list of file paths for optimization. Returns the list of newly
  * created queue item IDs in input order. The actual work happens
