@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { Home, List, Clock, Settings, Droplet, Layers, SlidersHorizontal, FolderOpen } from 'lucide-svelte';
+  import { Home, List, Clock, Settings, Droplet, Layers } from 'lucide-svelte';
   import { cn } from '$lib/utils/cn';
   import { queue } from '$lib/stores/queue.svelte';
   import StatCard from './StatCard.svelte';
@@ -17,8 +17,6 @@
       { href: '/', label: 'Dashboard', icon: Home },
       { href: '/queue', label: 'Queue', icon: List, badge: queue.active_count },
       { href: '/history', label: 'History', icon: Clock },
-      { href: '/settings', label: 'Presets', icon: SlidersHorizontal },
-      { href: '/settings', label: 'Watch Folders', icon: FolderOpen },
       { href: '/settings', label: 'Settings', icon: Settings },
     ];
     return items;
@@ -31,22 +29,22 @@
 </script>
 
 <aside
-  class="glass-strong flex h-full w-58 shrink-0 flex-col border-r border-[var(--color-border)] p-4"
+  class="glass-strong flex h-full w-60 shrink-0 flex-col border-r border-[var(--color-border)] p-5"
   aria-label="Primary navigation"
 >
   <!-- Brand -->
-  <div class="flex items-center gap-2.5 px-2 py-3">
+  <div class="flex items-center gap-3 px-2 py-2">
     <div
-      class="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-brand-500)] text-white shadow-[var(--shadow-glow)]"
+      class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-brand-500)] text-white shadow-[var(--shadow-glow)]"
       aria-hidden="true"
     >
-      <Droplet size={18} fill="currentColor" />
+      <Droplet size={22} fill="currentColor" />
     </div>
-    <span class="text-base font-semibold tracking-tight">TinyDrop</span>
+    <span class="text-xl font-semibold tracking-tight">TinyDrop</span>
   </div>
 
   <!-- Nav -->
-  <nav class="mt-4 flex flex-col gap-0.5">
+  <nav class="mt-7 flex flex-col gap-1">
     {#each nav_items as item (item.href)}
       {@const Icon = item.icon}
       {@const active = is_active(item.href)}
@@ -54,14 +52,14 @@
         href={item.href}
         aria-current={active ? 'page' : undefined}
         class={cn(
-          'group flex h-9 items-center justify-between gap-2 rounded-lg px-2.5 text-sm font-medium transition-colors',
+          'group flex h-11 items-center justify-between gap-2 rounded-xl px-3 text-[15px] font-medium transition-colors',
           active
             ? 'bg-[var(--color-brand-500)]/10 text-[var(--color-brand-600)] dark:text-[var(--color-brand-300)]'
             : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]',
         )}
       >
         <span class="flex items-center gap-2.5">
-          <Icon size={16} strokeWidth={2} aria-hidden="true" />
+          <Icon size={20} strokeWidth={2} aria-hidden="true" />
           {item.label}
         </span>
         {#if item.badge !== undefined && item.badge > 0}
@@ -77,15 +75,15 @@
   </nav>
 
   <!-- Spacer pushes stats to the bottom -->
-  <div class="glass mt-auto flex flex-col gap-2 rounded-xl p-3 pt-4">
+  <div class="glass mt-auto flex flex-col gap-3 rounded-2xl p-5">
     <StatCard label="Today's Savings" value="—" hint="coming online" />
     <div class="h-px bg-[var(--color-border)]"></div>
     <StatCard label="Images Optimized" value="0" hint="cumulative" />
     <button
-      class="mt-1 flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-muted)] text-xs font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+      class="mt-1 flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--color-muted)] text-sm font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
       type="button"
       disabled
-      title="Phase 2 — view full statistics"
+      title="Statistics are not available yet"
     >
       <Layers size={14} aria-hidden="true" />
       View All Statistics
