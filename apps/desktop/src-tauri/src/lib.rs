@@ -11,7 +11,8 @@ pub mod context;
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, WebviewUrl, WebviewWindowBuilder,
+    AppHandle, Manager, PhysicalPosition, Rect, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    WindowEvent,
 };
 
 use crate::context::AppContext;
@@ -76,23 +77,55 @@ fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-fn show_widget(app: &AppHandle) -> tauri::Result<()> {
-    if let Some(window) = app.get_webview_window("widget") {
-        window.show()?;
-        window.set_focus()?;
-        return Ok(());
-    }
+fn show_widget(app: &AppHandle, anchor: Option<Rect>) -> tauri::Result<()> {
+    let window = if let Some(window) = app.get_webview_window("widget") {
+        window
+    } else {
+        let window = WebviewWindowBuilder::new(app, "widget", WebviewUrl::App("widget".into()))
+            .title("TinyDrop")
+            .inner_size(400.0, 720.0)
+            .min_inner_size(360.0, 620.0)
+            .resizable(false)
+            .decorations(false)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .visible(false)
+            .build()?;
+        let widget = window.clone();
+        window.on_window_event(move |event| match event {
+            // The compact panel behaves like a native tray popover: clicking
+            // anywhere else dismisses it, while keeping it ready to reopen.
+            WindowEvent::Focused(false) => {
+                let _ = widget.hide();
+            }
+            WindowEvent::CloseRequested { api, .. } => {
+                api.prevent_close();
+                let _ = widget.hide();
+            }
+            _ => {}
+        });
+        window
+    };
 
-    WebviewWindowBuilder::new(app, "widget", WebviewUrl::App("widget".into()))
-        .title("TinyDrop")
-        .inner_size(360.0, 650.0)
-        .min_inner_size(320.0, 540.0)
-        .resizable(false)
-        .decorations(false)
-        .always_on_top(true)
-        .skip_taskbar(true)
-        .build()?;
+    if let Some(rect) = anchor {
+        position_widget_below_tray(&window, rect)?;
+    }
+    window.show()?;
+    window.set_focus()?;
     Ok(())
+}
+
+fn position_widget_below_tray(window: &WebviewWindow, tray_rect: Rect) -> tauri::Result<()> {
+    let scale_factor = window.scale_factor()?;
+    let tray_position = tray_rect.position.to_physical::<i32>(scale_factor);
+    let tray_size = tray_rect.size.to_physical::<u32>(scale_factor);
+    let widget_size = window.outer_size()?;
+
+    let x = (tray_position.x + tray_size.width as i32 - widget_size.width as i32).max(0);
+    let y =
+        (tray_position.y + tray_size.height as i32 + (8.0 * scale_factor).round() as i32).max(0);
+
+    window.set_position(PhysicalPosition::new(x, y))
 }
 
 fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
@@ -118,7 +151,7 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
                 let _ = show_main_window(app);
             }
             "open-widget" => {
-                let _ = show_widget(app);
+                let _ = show_widget(app, None);
             }
             "quit" => app.exit(0),
             _ => {}
@@ -127,10 +160,11 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
                 button_state: MouseButtonState::Up,
+                rect,
                 ..
             } = event
             {
-                let _ = show_widget(tray.app_handle());
+                let _ = show_widget(tray.app_handle(), Some(rect));
             }
         });
     if let Some(icon) = icon {

@@ -26,7 +26,7 @@
   {#if !is_widget}
     <Sidebar />
   {/if}
-  <main class:overflow-y-auto={!is_widget} class="relative flex-1">
+  <main class="relative flex-1 overflow-y-auto">
     {@render children()}
   </main>
 </div>

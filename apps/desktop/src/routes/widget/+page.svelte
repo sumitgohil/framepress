@@ -69,9 +69,9 @@
         <Settings size={17} />
       </button>
       <button
-        class="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
+        class="rounded-full bg-[var(--color-muted)] p-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
         type="button"
-        aria-label="Hide widget"
+        aria-label="Close compact widget"
         onclick={hide_widget}
       >
         <X size={17} />
