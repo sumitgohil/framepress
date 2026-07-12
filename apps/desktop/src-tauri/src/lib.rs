@@ -12,7 +12,6 @@ use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, PhysicalPosition, Rect, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
-    WindowEvent,
 };
 
 use crate::context::AppContext;
@@ -91,19 +90,6 @@ fn show_widget(app: &AppHandle, anchor: Option<Rect>) -> tauri::Result<()> {
             .skip_taskbar(true)
             .visible(false)
             .build()?;
-        let widget = window.clone();
-        window.on_window_event(move |event| match event {
-            // The compact panel behaves like a native tray popover: clicking
-            // anywhere else dismisses it, while keeping it ready to reopen.
-            WindowEvent::Focused(false) => {
-                let _ = widget.hide();
-            }
-            WindowEvent::CloseRequested { api, .. } => {
-                api.prevent_close();
-                let _ = widget.hide();
-            }
-            _ => {}
-        });
         window
     };
 
