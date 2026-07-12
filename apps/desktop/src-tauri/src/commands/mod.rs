@@ -31,6 +31,13 @@ pub fn show_main_window(app: tauri::AppHandle) -> Result<(), String> {
     window.set_focus().map_err(|error| error.to_string())
 }
 
+/// Convert the prepared widget host into the native macOS popover once its
+/// frontend has mounted. Other platforms intentionally treat this as a no-op.
+#[tauri::command]
+pub fn initialize_macos_popover(app: tauri::AppHandle) -> Result<(), String> {
+    crate::initialize_macos_popover(app)
+}
+
 /// Enqueue file paths for optimization.
 #[tauri::command]
 pub async fn optimize_paths(

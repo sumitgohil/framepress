@@ -20,7 +20,13 @@ use tauri_plugin_nspopover::{AppExt, ToPopoverOptions, WindowExt};
 #[cfg(not(target_os = "macos"))]
 use tauri::PhysicalPosition;
 
+#[cfg(target_os = "macos")]
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use crate::context::AppContext;
+
+#[cfg(target_os = "macos")]
+static MACOS_POPOVER_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 /// Application entry point. Called from `main.rs`.
 pub fn run() {
@@ -58,13 +64,14 @@ pub fn run() {
 
             setup_tray(app.handle())?;
             #[cfg(target_os = "macos")]
-            setup_macos_popover(app.handle())?;
+            prepare_macos_popover_host(app.handle())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::ping,
             commands::version,
             commands::show_main_window,
+            commands::initialize_macos_popover,
             commands::optimize_paths,
             commands::optimize_one,
             commands::cancel_job,
@@ -103,14 +110,34 @@ fn build_widget_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
 }
 
 #[cfg(target_os = "macos")]
-fn setup_macos_popover(app: &AppHandle) -> tauri::Result<()> {
+fn prepare_macos_popover_host(app: &AppHandle) -> tauri::Result<()> {
     let window = build_widget_window(app)?;
-    // NSPopover takes ownership of the webview content. Keep the source Tauri
-    // window hidden so macOS never leaves an empty, grey companion window.
     window.hide()?;
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+pub fn initialize_macos_popover(app: AppHandle) -> Result<(), String> {
+    if MACOS_POPOVER_INITIALIZED.swap(true, Ordering::AcqRel) {
+        return Ok(());
+    }
+
+    let Some(window) = app.get_webview_window("widget") else {
+        MACOS_POPOVER_INITIALIZED.store(false, Ordering::Release);
+        return Err("widget window is unavailable".to_string());
+    };
+
+    // Moving the webview after Svelte mounts prevents Wry from reattaching it
+    // to the hidden host window and leaving a second, blank panel on screen.
     window.to_popover(ToPopoverOptions {
         is_fullsize_content: true,
     });
+    app.show_popover();
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn initialize_macos_popover() -> Result<(), String> {
     Ok(())
 }
 

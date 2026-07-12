@@ -6,7 +6,12 @@
 
   import DropZone from '$lib/components/DropZone.svelte';
   import PresetSelector from '$lib/components/PresetSelector.svelte';
-  import { optimizePaths, recentHistory, showMainWindow } from '$lib/ipc/commands';
+  import {
+    initializeMacosPopover,
+    optimizePaths,
+    recentHistory,
+    showMainWindow,
+  } from '$lib/ipc/commands';
   import type { HistoryRow } from '$lib/ipc/types';
   import { settings } from '$lib/stores/settings.svelte';
   import { format_bytes } from '$lib/utils/format';
@@ -15,6 +20,7 @@
   let enqueuing = $state(false);
 
   onMount(() => {
+    void initializeMacosPopover().catch(() => undefined);
     void refresh_recent();
   });
 
