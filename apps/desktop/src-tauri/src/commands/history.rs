@@ -1,0 +1,18 @@
+//! History + stats Tauri commands. Phase 1: read-only from the SQLite store.
+
+use tauri::State;
+
+use crate::context::AppContext;
+
+pub async fn recent_history_inner(
+    limit: u32,
+    ctx: State<'_, AppContext>,
+) -> Result<Vec<tinydrop_core::history::HistoryEntry>, String> {
+    ctx.history().recent(limit).map_err(|e| format!("{e}"))
+}
+
+pub async fn stats_snapshot_inner(
+    ctx: State<'_, AppContext>,
+) -> Result<tinydrop_core::history::StatsSnapshot, String> {
+    ctx.history().stats().map_err(|e| format!("{e}"))
+}
