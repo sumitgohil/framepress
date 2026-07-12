@@ -1,0 +1,11 @@
+[package]
+name = "tinydrop-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+description = "TinyDrop CLI — Phase 3, not yet implemented"
+
+[lints.rust]
+unsafe_code = "forbid"
