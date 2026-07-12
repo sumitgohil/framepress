@@ -2427,42 +2427,6 @@
           "markdownDescription": "Denies the save command without any pre-configured scope."
         },
         {
-          "description": "Enables the hide_popover command without any pre-configured scope.",
-          "type": "string",
-          "const": "nspopover:allow-hide-popover",
-          "markdownDescription": "Enables the hide_popover command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the is_popover_shown command without any pre-configured scope.",
-          "type": "string",
-          "const": "nspopover:allow-is-popover-shown",
-          "markdownDescription": "Enables the is_popover_shown command without any pre-configured scope."
-        },
-        {
-          "description": "Enables the show_popover command without any pre-configured scope.",
-          "type": "string",
-          "const": "nspopover:allow-show-popover",
-          "markdownDescription": "Enables the show_popover command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the hide_popover command without any pre-configured scope.",
-          "type": "string",
-          "const": "nspopover:deny-hide-popover",
-          "markdownDescription": "Denies the hide_popover command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the is_popover_shown command without any pre-configured scope.",
-          "type": "string",
-          "const": "nspopover:deny-is-popover-shown",
-          "markdownDescription": "Denies the is_popover_shown command without any pre-configured scope."
-        },
-        {
-          "description": "Denies the show_popover command without any pre-configured scope.",
-          "type": "string",
-          "const": "nspopover:deny-show-popover",
-          "markdownDescription": "Denies the show_popover command without any pre-configured scope."
-        },
-        {
           "description": "This permission set allows opening `mailto:`, `tel:`, `https://` and `http://` urls using their default application\nas well as reveal file in directories using default file explorer\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-reveal-item-in-dir`\n- `allow-default-urls`",
           "type": "string",
           "const": "opener:default",
