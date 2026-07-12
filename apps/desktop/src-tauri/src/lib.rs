@@ -105,6 +105,9 @@ fn build_widget_window(app: &AppHandle) -> tauri::Result<WebviewWindow> {
 #[cfg(target_os = "macos")]
 fn setup_macos_popover(app: &AppHandle) -> tauri::Result<()> {
     let window = build_widget_window(app)?;
+    // NSPopover takes ownership of the webview content. Keep the source Tauri
+    // window hidden so macOS never leaves an empty, grey companion window.
+    window.hide()?;
     window.to_popover(ToPopoverOptions {
         is_fullsize_content: true,
     });
@@ -113,6 +116,11 @@ fn setup_macos_popover(app: &AppHandle) -> tauri::Result<()> {
 
 #[cfg(target_os = "macos")]
 fn show_widget(app: &AppHandle, _anchor: Option<Rect>) -> tauri::Result<()> {
+    // The plugin presents the retained webview in an NSPopover. Hiding its
+    // original host window prevents a blank native window from resurfacing.
+    if let Some(window) = app.get_webview_window("widget") {
+        window.hide()?;
+    }
     app.show_popover();
     Ok(())
 }
