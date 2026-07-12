@@ -18,6 +18,11 @@ export async function version(): Promise<string> {
   return invoke<string>('version');
 }
 
+/** Show and focus the primary dashboard window from the compact widget. */
+export async function showMainWindow(): Promise<void> {
+  return invoke<void>('show_main_window');
+}
+
 /**
  * Enqueue a list of file paths for optimization. Returns the list of newly
  * created queue item IDs in input order. The actual work happens

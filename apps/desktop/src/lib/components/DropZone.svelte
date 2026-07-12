@@ -11,9 +11,11 @@
     onfiles: (paths: string[]) => void;
     /** Optional: a small message under the drop zone (e.g. loading state). */
     hint?: string;
+    /** Compact treatment for the menu-bar widget. */
+    compact?: boolean;
   };
 
-  let { onfiles, hint }: Props = $props();
+  let { onfiles, hint, compact = false }: Props = $props();
 
   let drag_active = $state(false);
   let listener_cleanup: (() => void) | null = null;
@@ -60,7 +62,8 @@
 <button
   type="button"
   class={cn(
-    'group relative flex w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed px-8 py-16 text-center transition-all duration-200 ease-out',
+    'group relative flex w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed text-center transition-all duration-200 ease-out',
+    compact ? 'px-5 py-8' : 'px-8 py-16',
     drag_active
       ? 'scale-[1.02] border-[var(--color-brand-500)] bg-[var(--color-brand-500)]/10 shadow-[var(--shadow-glow)]'
       : 'border-[var(--color-brand-500)]/40 bg-[var(--color-brand-500)]/5 hover:border-[var(--color-brand-500)]/70 hover:bg-[var(--color-brand-500)]/10',
@@ -97,24 +100,27 @@
 
   <div
     class={cn(
-      'flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-brand-500)]/10 text-[var(--color-brand-500)] transition-transform duration-300',
+      'flex items-center justify-center rounded-full bg-[var(--color-brand-500)]/10 text-[var(--color-brand-500)] transition-transform duration-300',
+      compact ? 'h-12 w-12' : 'h-16 w-16',
       drag_active ? 'scale-110' : 'group-hover:scale-105',
     )}
   >
     {#if drag_active}
-      <ImagePlus size={32} strokeWidth={1.75} />
+      <ImagePlus size={compact ? 25 : 32} strokeWidth={1.75} />
     {:else}
-      <CloudUpload size={32} strokeWidth={1.75} />
+      <CloudUpload size={compact ? 25 : 32} strokeWidth={1.75} />
     {/if}
   </div>
 
   <div class="space-y-1.5">
-    <p class="text-lg font-semibold tracking-tight">
-      {drag_active ? 'Release to add files' : 'Drop images or folders here'}
+    <p class={cn('text-base font-semibold tracking-tight', !compact && 'text-lg')}>
+      {drag_active ? 'Release to add files' : compact ? 'Drop to optimize' : 'Drop images or folders here'}
     </p>
-    <p class="text-xs tracking-wide text-[var(--color-muted-foreground)] uppercase">
-      {SUPPORTED.join(', ')}
-    </p>
+    {#if !compact}
+      <p class="text-xs tracking-wide text-[var(--color-muted-foreground)] uppercase">
+        {SUPPORTED.join(', ')}
+      </p>
+    {/if}
   </div>
 
   <p class="text-sm text-[var(--color-muted-foreground)]">

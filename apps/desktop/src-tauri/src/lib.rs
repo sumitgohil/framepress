@@ -8,7 +8,11 @@
 pub mod commands;
 pub mod context;
 
-use tauri::Manager;
+use tauri::{
+    menu::{Menu, MenuItem, PredefinedMenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    AppHandle, Manager, WebviewUrl, WebviewWindowBuilder,
+};
 
 use crate::context::AppContext;
 
@@ -40,11 +44,14 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 queue.start();
             });
+
+            setup_tray(app.handle())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::ping,
             commands::version,
+            commands::show_main_window,
             commands::optimize_paths,
             commands::optimize_one,
             commands::cancel_job,
@@ -59,4 +66,76 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
+    if let Some(window) = app.get_webview_window("main") {
+        window.show()?;
+        window.set_focus()?;
+    }
+    Ok(())
+}
+
+fn show_widget(app: &AppHandle) -> tauri::Result<()> {
+    if let Some(window) = app.get_webview_window("widget") {
+        window.show()?;
+        window.set_focus()?;
+        return Ok(());
+    }
+
+    WebviewWindowBuilder::new(app, "widget", WebviewUrl::App("widget".into()))
+        .title("TinyDrop")
+        .inner_size(360.0, 650.0)
+        .min_inner_size(320.0, 540.0)
+        .resizable(false)
+        .decorations(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .build()?;
+    Ok(())
+}
+
+fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
+    let open_main = MenuItem::with_id(app, "open-main", "Open TinyDrop", true, None::<&str>)?;
+    let open_widget = MenuItem::with_id(
+        app,
+        "open-widget",
+        "Open Compact Widget",
+        true,
+        None::<&str>,
+    )?;
+    let quit = MenuItem::with_id(app, "quit", "Quit TinyDrop", true, None::<&str>)?;
+    let separator = PredefinedMenuItem::separator(app)?;
+    let menu = Menu::with_items(app, &[&open_main, &open_widget, &separator, &quit])?;
+
+    let icon = app.default_window_icon().cloned();
+    let mut tray = TrayIconBuilder::with_id("tinydrop-tray")
+        .menu(&menu)
+        .tooltip("TinyDrop")
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            "open-main" => {
+                let _ = show_main_window(app);
+            }
+            "open-widget" => {
+                let _ = show_widget(app);
+            }
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                let _ = show_widget(tray.app_handle());
+            }
+        });
+    if let Some(icon) = icon {
+        tray = tray.icon(icon);
+    }
+    tray.build(app)?;
+    Ok(())
 }

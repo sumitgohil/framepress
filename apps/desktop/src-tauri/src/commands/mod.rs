@@ -5,7 +5,7 @@ mod history;
 mod optimize;
 mod settings;
 
-use tauri::State;
+use tauri::{Manager, State};
 
 use crate::context::AppContext;
 
@@ -19,6 +19,16 @@ pub fn ping() -> &'static str {
 #[tauri::command]
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
+}
+
+/// Reveal and focus the main dashboard window. Used by the compact tray widget.
+#[tauri::command]
+pub fn show_main_window(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "main window is unavailable".to_string())?;
+    window.show().map_err(|error| error.to_string())?;
+    window.set_focus().map_err(|error| error.to_string())
 }
 
 /// Enqueue file paths for optimization.
