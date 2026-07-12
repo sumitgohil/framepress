@@ -13,7 +13,7 @@
 </script>
 
 <div
-  class="glass flex flex-col gap-0.5 rounded-xl p-3"
+  class="flex flex-col gap-0.5"
   aria-label={label}
 >
   <span class="text-[11px] font-medium tracking-wide text-[var(--color-muted-foreground)] uppercase">

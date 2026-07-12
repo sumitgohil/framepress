@@ -63,7 +63,7 @@
   type="button"
   class={cn(
     'group relative flex w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed text-center transition-all duration-200 ease-out',
-    compact ? 'px-5 py-8' : 'px-8 py-16',
+    compact ? 'px-5 py-8' : 'min-h-[15.25rem] px-8 py-12',
     drag_active
       ? 'scale-[1.02] border-[var(--color-brand-500)] bg-[var(--color-brand-500)]/10 shadow-[var(--shadow-glow)]'
       : 'border-[var(--color-brand-500)]/40 bg-[var(--color-brand-500)]/5 hover:border-[var(--color-brand-500)]/70 hover:bg-[var(--color-brand-500)]/10',

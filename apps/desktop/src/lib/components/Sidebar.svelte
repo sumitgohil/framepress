@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { Home, List, Clock, Settings, Droplet, Layers } from 'lucide-svelte';
+  import { Home, List, Clock, Settings, Droplet, Layers, SlidersHorizontal, FolderOpen } from 'lucide-svelte';
   import { cn } from '$lib/utils/cn';
   import { queue } from '$lib/stores/queue.svelte';
   import StatCard from './StatCard.svelte';
@@ -12,13 +12,13 @@
     badge?: number;
   };
 
-  // Spec-required nav for Phase 1 (see ARCHITECTURE.md). Watch Folders and
-  // Presets are explicitly deferred to Phase 2/3.
   let nav_items: NavItem[] = $derived.by(() => {
     const items: NavItem[] = [
       { href: '/', label: 'Dashboard', icon: Home },
       { href: '/queue', label: 'Queue', icon: List, badge: queue.active_count },
       { href: '/history', label: 'History', icon: Clock },
+      { href: '/settings', label: 'Presets', icon: SlidersHorizontal },
+      { href: '/settings', label: 'Watch Folders', icon: FolderOpen },
       { href: '/settings', label: 'Settings', icon: Settings },
     ];
     return items;
@@ -31,7 +31,7 @@
 </script>
 
 <aside
-  class="glass-strong flex h-full w-60 shrink-0 flex-col border-r border-[var(--color-border)] p-4"
+  class="glass-strong flex h-full w-58 shrink-0 flex-col border-r border-[var(--color-border)] p-4"
   aria-label="Primary navigation"
 >
   <!-- Brand -->
@@ -77,11 +77,12 @@
   </nav>
 
   <!-- Spacer pushes stats to the bottom -->
-  <div class="mt-auto flex flex-col gap-2 pt-6">
+  <div class="glass mt-auto flex flex-col gap-2 rounded-xl p-3 pt-4">
     <StatCard label="Today's Savings" value="—" hint="coming online" />
+    <div class="h-px bg-[var(--color-border)]"></div>
     <StatCard label="Images Optimized" value="0" hint="cumulative" />
     <button
-      class="mt-1 flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-transparent text-xs font-medium text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
+      class="mt-1 flex h-9 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-muted)] text-xs font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
       type="button"
       disabled
       title="Phase 2 — view full statistics"

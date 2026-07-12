@@ -47,31 +47,23 @@
   <title>Dashboard · TinyDrop</title>
 </svelte:head>
 
-<div class="mx-auto flex max-w-3xl flex-col gap-8 px-8 py-10">
-  <header class="space-y-1">
-    <h1 class="text-2xl font-semibold tracking-tight">Dashboard</h1>
-    <p class="text-sm text-[var(--color-muted-foreground)]">
-      Drop images anywhere below — TinyDrop picks the smallest output that
-      still looks right.
-    </p>
-  </header>
-
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-7 px-8 py-10 lg:px-10">
   <DropZone onfiles={handle_files} />
 
   <section
-    class="glass relative flex flex-col gap-3 rounded-2xl p-5"
+    class="glass relative flex items-center justify-between gap-5 rounded-2xl px-5 py-4"
     class:z-20={preset_open}
     aria-label="Compression preset"
   >
-    <div class="flex items-start justify-between gap-4">
-      <div>
-        <h2 class="text-sm font-semibold tracking-tight">Smart Preset</h2>
-        <p class="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
-          We'll automatically choose the best settings for maximum savings.
-        </p>
-      </div>
+    <div class="min-w-0">
+      <h2 class="text-sm font-semibold tracking-tight">Smart Preset</h2>
+      <p class="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+        We'll automatically choose the best settings for maximum savings.
+      </p>
     </div>
-    <PresetSelector bind:open={preset_open} />
+    <div class="w-56 shrink-0">
+      <PresetSelector bind:open={preset_open} />
+    </div>
   </section>
 
   <RecentOptimizations rows={recent} />
