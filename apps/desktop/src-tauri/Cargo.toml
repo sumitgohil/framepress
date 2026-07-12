@@ -29,6 +29,9 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+tauri-plugin-nspopover = { git = "https://github.com/freethinkel/tauri-nspopover-plugin.git", rev = "b571e0e665da7016d967bbf027b92951ac88f78e" }
+
 [features]
 # Tauri features: keep the default set for Phase 1.
 default = []

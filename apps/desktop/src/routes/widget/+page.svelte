@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { ArrowUpRight, Droplet, Settings, X } from 'lucide-svelte';
   import { getCurrentWindow } from '@tauri-apps/api/window';
+  import { hide as hide_popover } from 'tauri-plugin-nspopover';
 
   import DropZone from '$lib/components/DropZone.svelte';
   import PresetSelector from '$lib/components/PresetSelector.svelte';
@@ -41,6 +42,10 @@
   }
 
   async function hide_widget() {
+    if (navigator.userAgent.includes('Macintosh')) {
+      await hide_popover();
+      return;
+    }
     await getCurrentWindow().hide();
   }
 </script>

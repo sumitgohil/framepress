@@ -47,6 +47,7 @@
     "mode-watcher": "^0.4.0",
     "svelte-motion": "^0.12.2",
     "tailwind-merge": "^2.5.4",
+    "tauri-plugin-nspopover": "github:freethinkel/tauri-nspopover-plugin#b571e0e665da7016d967bbf027b92951ac88f78e",
     "tw-animate-css": "^1.0.0"
   }
 }

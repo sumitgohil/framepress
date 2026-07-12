@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "macos-popover",
+  "description": "Native NSPopover controls for the macOS compact widget.",
+  "windows": ["widget"],
+  "platforms": ["macOS"],
+  "permissions": [
+    "nspopover:allow-show-popover",
+    "nspopover:allow-hide-popover",
+    "nspopover:allow-is-popover-shown"
+  ]
+}
