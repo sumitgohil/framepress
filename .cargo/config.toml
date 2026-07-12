@@ -1,0 +1,15 @@
+[build]
+rustflags = ["-D", "warnings"]
+
+# Speed up incremental builds in this monorepo.
+[profile.dev]
+codegen-units = 256
+incremental = true
+
+[profile.dev.package."*"]
+opt-level = 1
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true

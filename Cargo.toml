@@ -1,0 +1,58 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/tinydrop-core",
+    "crates/tinydrop-cli",
+    "crates/tinydrop-api",
+    "apps/desktop/src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+rust-version = "1.75"
+authors = ["TinyDrop contributors"]
+repository = "https://github.com/tinydrop/tinydrop"
+
+[workspace.dependencies]
+# Core image & format deps
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+oxipng = "9"
+webp = "0.3"
+mozjpeg = "0.10"
+fast_image_resize = "5"
+
+# Async + parallelism
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", "time", "signal"] }
+rayon = "1.10"
+futures = "0.3"
+
+# Data + storage
+rusqlite = { version = "0.32", features = ["bundled"] }
+deadpool-sqlite = "0.10"
+r2d2 = "0.8"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Errors & logging
+thiserror = "2"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Hashing & utilities
+blake3 = "1"
+bytes = "1"
+tempfile = "3"
+
+# Testing
+proptest = "1"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true

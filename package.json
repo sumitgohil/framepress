@@ -1,0 +1,24 @@
+{
+  "name": "tinydrop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TinyDrop monorepo root",
+  "license": "MIT OR Apache-2.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "check": "pnpm -r check",
+    "test": "pnpm -r test",
+    "format": "prettier --write \"**/*.{ts,svelte,json,md,css}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,svelte,json,md,css}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "prettier-plugin-svelte": "^3.2.7",
+    "prettier-plugin-tailwindcss": "^0.6.8"
+  }
+}

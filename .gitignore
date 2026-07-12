@@ -1,0 +1,56 @@
+# Node
+node_modules/
+.pnpm-store/
+.pnp.*
+.yarn/
+
+# SvelteKit / Vite
+.svelte-kit/
+build/
+dist/
+.output/
+.vite/
+*.local
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+src-tauri/Cargo.lock
+
+# Rust
+target/
+**/*.rs.bk
+*.pdb
+
+# IDE / Editor
+.idea/
+.vscode/*
+!.vscode/settings.json.example
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test fixtures & generated artifacts
+fixtures/generated/
+*.tmp
+*.log
+coverage/
+.criterion/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Tauri build outputs
+*.app
+*.dmg
+*.deb
+*.rpm
+
+# Design assets (kept on disk for reference, not tracked)
+TinyDrop UI Inspiration.png
