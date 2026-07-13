@@ -38,7 +38,9 @@ pub use domain::{
     CompressionPreset, CompressionResult, EngineSettings, ImageFormat, PresetSpec, QualityGate,
     ScoredCandidate,
 };
-pub use engines::{default_registry, engines_for_format, MozJpegEngine, OxipngEngine, WebPEngine};
+pub use engines::{
+    default_registry, engines_for_format, MozJpegEngine, OxipngEngine, PngQuantEngine, WebPEngine,
+};
 pub use errors::{CoreError, CoreResult};
 pub use optimizer::AdaptiveOptimizer;
 pub use presets::BuiltinPresetResolver;

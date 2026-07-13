@@ -10,7 +10,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0-or-later"
 rust-version = "1.75"
 authors = ["TinyDrop contributors"]
 repository = "https://github.com/tinydrop/tinydrop"
@@ -19,6 +19,8 @@ repository = "https://github.com/tinydrop/tinydrop"
 # Core image & format deps
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
 oxipng = "9"
+imagequant = "4.4.1"
+png = "0.17.16"
 webp = "0.3"
 mozjpeg = "0.10"
 fast_image_resize = "5"

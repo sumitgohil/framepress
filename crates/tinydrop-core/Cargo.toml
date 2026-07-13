@@ -13,6 +13,8 @@ unsafe_code = "forbid"
 # Image format support
 image = { workspace = true }
 oxipng = { workspace = true }
+imagequant = { workspace = true }
+png = { workspace = true }
 webp = { workspace = true }
 mozjpeg = { workspace = true }
 

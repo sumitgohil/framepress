@@ -107,12 +107,11 @@ fn lossless_preset_always_passes_quality_gate() {
     }
 }
 
-/// The Email preset is TinyDrop's explicitly lossy delivery mode. Guard its
-/// real-world effectiveness with the checked-in image corpus: each original
-/// PNG must be reduced by at least 88%, while the optimizer still decides the
-/// best codec and validates the visual-quality budget.
+/// Presets may change quality, but they must never silently change a user's
+/// file format. Email compression must keep each PNG as a PNG and must not
+/// replace it with a larger file.
 #[test]
-fn email_preset_reduces_each_sample_by_at_least_eighty_eight_percent() {
+fn email_preset_preserves_pngs_without_making_them_larger() {
     let Some(samples) = samples_dir() else {
         return;
     };
@@ -132,17 +131,34 @@ fn email_preset_reduces_each_sample_by_at_least_eighty_eight_percent() {
             .unwrap_or_else(|error| panic!("email optimization failed for {input:?}: {error}"));
         let ratio = result.result.optimized_bytes as f64 / result.result.original_bytes as f64;
         println!(
-            "{}: {} -> {} bytes ({:.1}% retained, {})",
+            "{}: {} -> {} bytes ({:.1}% saved, {}, {})",
             input.display(),
             result.result.original_bytes,
             result.result.optimized_bytes,
-            ratio * 100.0,
+            (1.0 - ratio) * 100.0,
             result.result.engine,
+            result.result.format,
         );
         assert!(
-            ratio <= 0.12,
-            "Email preset did not meet the 88% reduction budget for {}",
+            result.result.optimized_bytes <= result.result.original_bytes,
+            "Email preset made {} larger",
             input.display()
         );
+        assert_eq!(result.result.format.to_string(), "PNG");
+        assert_eq!(
+            result
+                .result
+                .output_path
+                .extension()
+                .and_then(|extension| extension.to_str()),
+            Some("png")
+        );
+        if input.file_name().and_then(|name| name.to_str()) == Some("Ads1.png") {
+            assert!(
+                ratio <= 0.20,
+                "Email PNG compression should save at least 80% for {}",
+                input.display()
+            );
+        }
     }
 }

@@ -14,8 +14,8 @@
 //!
 //! | Format | Candidates                                            |
 //! |--------|-------------------------------------------------------|
-//! | PNG    | oxipng (lossless), webp (lossless if no alpha)        |
-//! | JPEG   | mozjpeg (lossy), webp (lossy)                         |
+//! | PNG    | oxipng (lossless)                                     |
+//! | JPEG   | mozjpeg (lossy)                                       |
 //! | WebP   | webp re-encode at preset's quality                    |
 //! | GIF/SVG| pass-through (no re-encode in Phase 1)                |
 
@@ -137,17 +137,19 @@ impl AdaptiveOptimizer {
         engines
             .into_iter()
             .filter_map(|engine| {
+                // Automatic optimization preserves the uploaded format.
+                // WebP can decode PNG/JPEG, but it must only be used for an
+                // explicit conversion/export request, never silently here.
+                if engine.name() == "webp" && format != ImageFormat::WebP {
+                    return None;
+                }
                 // Lossless presets may only use engines that can produce lossless output.
                 if settings.lossless && !engine.supports_lossless(format) {
                     return None;
                 }
                 Some(Candidate {
                     engine,
-                    output_format: if engine.name() == "webp" {
-                        ImageFormat::WebP
-                    } else {
-                        format
-                    },
+                    output_format: format,
                     settings,
                 })
             })
@@ -160,7 +162,7 @@ impl AdaptiveOptimizer {
     /// On success, the winning output is written to `final_output`. The
     /// runner-up (if any) is included in the returned
     /// [`ScoredCandidate`](crate::domain::ScoredCandidate) so the UI can show
-    /// the margin ("WebP beat oxipng by 34%").
+    /// the margin between the format-preserving candidates.
     pub fn optimize(
         &self,
         input: &Path,
@@ -303,44 +305,49 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn default_registry_produces_optimizer_with_three_engines() {
+    fn default_registry_produces_optimizer_with_four_engines() {
         let opt = AdaptiveOptimizer::new(default_registry());
-        assert_eq!(opt.engines().len(), 3);
+        assert_eq!(opt.engines().len(), 4);
     }
 
     #[test]
-    fn candidates_for_png_includes_oxipng_and_webp() {
+    fn png_candidates_preserve_png_output() {
         let opt = AdaptiveOptimizer::new(default_registry());
-        let names: Vec<_> = opt
-            .candidates_for(ImageFormat::Png)
+        let candidates =
+            opt.build_candidates(ImageFormat::Png, CompressionPreset::MaximumCompression);
+
+        assert_eq!(candidates.len(), 2);
+        assert!(candidates
             .iter()
-            .map(|e| e.name())
-            .collect();
-        assert!(names.contains(&"oxipng"));
-        assert!(names.contains(&"webp"));
-    }
-
-    #[test]
-    fn candidates_for_jpeg_include_mozjpeg_and_webp() {
-        let opt = AdaptiveOptimizer::new(default_registry());
-        let names: Vec<_> = opt
-            .candidates_for(ImageFormat::Jpeg)
+            .any(|candidate| candidate.engine.name() == "oxipng"));
+        assert!(candidates
             .iter()
-            .map(|e| e.name())
-            .collect();
-        assert!(names.contains(&"mozjpeg"));
-        assert!(names.contains(&"webp"));
+            .any(|candidate| candidate.engine.name() == "pngquant"));
+        assert!(candidates
+            .iter()
+            .all(|candidate| candidate.output_format == ImageFormat::Png));
     }
 
     #[test]
-    fn webp_candidates_use_webp_output_paths() {
+    fn jpeg_candidates_preserve_jpeg_output() {
         let opt = AdaptiveOptimizer::new(default_registry());
         let candidates = opt.build_candidates(ImageFormat::Jpeg, CompressionPreset::Email);
-        let webp = candidates
+
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].engine.name(), "mozjpeg");
+        assert!(candidates
             .iter()
-            .find(|candidate| candidate.engine.name() == "webp")
-            .expect("webp should be considered for JPEG inputs");
-        assert_eq!(webp.output_format, ImageFormat::WebP);
+            .all(|candidate| candidate.output_format == ImageFormat::Jpeg));
+    }
+
+    #[test]
+    fn webp_candidates_preserve_webp_output() {
+        let opt = AdaptiveOptimizer::new(default_registry());
+        let candidates = opt.build_candidates(ImageFormat::WebP, CompressionPreset::Email);
+
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].engine.name(), "webp");
+        assert_eq!(candidates[0].output_format, ImageFormat::WebP);
     }
 
     #[test]
@@ -415,7 +422,41 @@ mod tests {
             .optimize(&input, CompressionPreset::Website, &output)
             .expect("optimize should succeed");
         assert!(winner.passed_quality_gate);
-        // The winner is whichever engine produced the smallest passing output.
+        assert_eq!(winner.result.format, ImageFormat::Png);
+        assert_eq!(
+            winner
+                .result
+                .output_path
+                .extension()
+                .and_then(|extension| extension.to_str()),
+            Some("png")
+        );
         assert!(winner.result.optimized_bytes <= winner.result.original_bytes);
+    }
+
+    #[test]
+    fn png_output_stays_png_for_every_preset() {
+        let opt = AdaptiveOptimizer::new(default_registry());
+        let dir = tempdir().unwrap();
+        let input = dir.path().join("source.png");
+        let output = dir.path().join("source-tinydrop.png");
+        let image = image::ImageBuffer::<image::Rgba<u8>, _>::from_fn(64, 64, |x, y| {
+            image::Rgba([(x * 3) as u8, (y * 3) as u8, 120, 255])
+        });
+        image.save(&input).unwrap();
+
+        for &preset in CompressionPreset::ALL {
+            let result = opt.optimize(&input, preset, &output).unwrap();
+            assert_eq!(result.result.format, ImageFormat::Png, "{preset:?}");
+            assert_eq!(
+                result
+                    .result
+                    .output_path
+                    .extension()
+                    .and_then(|extension| extension.to_str()),
+                Some("png"),
+                "{preset:?}"
+            );
+        }
     }
 }

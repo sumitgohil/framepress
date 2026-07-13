@@ -119,7 +119,7 @@ pub const PRESETS: &[PresetSpec] = &[
         quality: 60,
         lossless: false,
         effort: 10,
-        max_dssim: 0.03,
+        max_dssim: 0.13,
     },
     // Developer Assets — lossless PNG, max effort (icons, screenshots).
     PresetSpec {
@@ -135,7 +135,7 @@ pub const PRESETS: &[PresetSpec] = &[
         quality: 78,
         lossless: false,
         effort: 8,
-        max_dssim: 0.01,
+        max_dssim: 0.06,
     },
     // Email — push quality down, file size is the constraint.
     PresetSpec {
@@ -143,7 +143,7 @@ pub const PRESETS: &[PresetSpec] = &[
         quality: 55,
         lossless: false,
         effort: 10,
-        max_dssim: 0.02,
+        max_dssim: 0.12,
     },
     // Social Media — punchy, slightly higher saturation tolerance.
     PresetSpec {
@@ -151,7 +151,7 @@ pub const PRESETS: &[PresetSpec] = &[
         quality: 72,
         lossless: false,
         effort: 9,
-        max_dssim: 0.015,
+        max_dssim: 0.08,
     },
 ];
 

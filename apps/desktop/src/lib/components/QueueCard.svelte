@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2 } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2, Sparkles } from 'lucide-svelte';
 
   import ImagePreview from '$lib/components/ImagePreview.svelte';
   import type { QueueItem } from '$lib/ipc/types';
@@ -15,6 +15,7 @@
   let expanded = $state(false);
 
   let filename = $derived(item.input_path.split('/').pop() ?? item.input_path);
+  let webp_recommendation = $derived(item.format === 'png' || item.format === 'jpeg');
 
   let status_label = $derived.by(() => {
     switch (item.status) {
@@ -135,6 +136,15 @@
 
       {#if item.error_message && (item.status === 'failed' || item.status === 'cancelled')}
         <p class="text-xs text-[var(--color-danger)]">{item.error_message}</p>
+      {/if}
+
+      {#if item.status === 'completed' && webp_recommendation}
+        <div class="flex items-start gap-2 rounded-lg bg-[var(--color-brand-500)]/8 px-2.5 py-2 text-xs leading-5 text-[var(--color-muted-foreground)]">
+          <Sparkles size={14} class="mt-0.5 shrink-0 text-[var(--color-brand-500)]" aria-hidden="true" />
+          <span>
+            Need a smaller web asset? Export a separate WebP copy when your destination supports it—this {item.format?.toUpperCase()} stays unchanged.
+          </span>
+        </div>
       {/if}
     </div>
 

@@ -44,4 +44,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE).
+Licensed under the [GNU General Public License v3.0 or later](LICENSE).

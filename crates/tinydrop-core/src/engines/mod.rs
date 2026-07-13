@@ -10,10 +10,12 @@
 
 mod mozjpeg;
 mod oxipng;
+mod pngquant;
 mod webp;
 
 pub use mozjpeg::MozJpegEngine;
 pub use oxipng::OxipngEngine;
+pub use pngquant::PngQuantEngine;
 pub use webp::WebPEngine;
 
 use crate::domain::ImageFormat;
@@ -26,6 +28,7 @@ use crate::traits::CompressionEngine;
 pub fn default_registry() -> Vec<Box<dyn CompressionEngine>> {
     vec![
         Box::new(OxipngEngine::new()),
+        Box::new(PngQuantEngine::new()),
         Box::new(MozJpegEngine::new()),
         Box::new(WebPEngine::new()),
     ]
@@ -49,11 +52,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn registry_contains_all_three_engines() {
+    fn registry_contains_all_four_engines() {
         let reg = default_registry();
-        assert_eq!(reg.len(), 3);
+        assert_eq!(reg.len(), 4);
         let names: Vec<_> = reg.iter().map(|e| e.name()).collect();
         assert!(names.contains(&"oxipng"));
+        assert!(names.contains(&"pngquant"));
         assert!(names.contains(&"mozjpeg"));
         assert!(names.contains(&"webp"));
     }
