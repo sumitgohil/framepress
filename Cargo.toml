@@ -50,6 +50,11 @@ blake3 = "1"
 bytes = "1"
 tempfile = "3"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+rand = "0.8"
+rmcp = { version = "0.16.0", features = ["server", "transport-streamable-http-server"] }
+axum = "0.7"
+tokio-util = "0.7"
+schemars = "1"
 
 # Testing
 proptest = "1"

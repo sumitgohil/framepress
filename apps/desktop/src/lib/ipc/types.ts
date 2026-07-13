@@ -41,6 +41,24 @@ export type WebpCopy = {
   optimized_bytes: number;
 };
 
+/** Local-only MCP Agent Access configuration. The token is displayed masked in UI. */
+export type McpConfig = {
+  enabled: boolean;
+  port: number;
+  token: string;
+  approved_roots: string[];
+  preserve_format: boolean;
+  max_batch_size: number;
+};
+
+export type McpServerStatus = {
+  enabled: boolean;
+  running: boolean;
+  endpoint: string;
+  active_jobs: number;
+  error: string | null;
+};
+
 // ---------------------------------------------------------------------------
 // Queue types (Branch 5)
 // ---------------------------------------------------------------------------

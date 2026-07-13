@@ -17,6 +17,8 @@ use tinydrop_core::{
     ScoredCandidate,
 };
 
+use crate::mcp::AgentAccessManager;
+
 /// The application context. Cheap to clone — all heavy state is behind
 /// `Arc`/`Mutex` or trait objects that are themselves `Send + Sync`.
 #[derive(Clone)]
@@ -29,6 +31,8 @@ pub struct AppContext {
     queue: Arc<QueueProcessor>,
     /// SQLite-backed history store.
     history: Arc<SqliteHistory>,
+    /// Local MCP server configuration and lifecycle manager.
+    agent_access: Arc<AgentAccessManager>,
 }
 
 impl AppContext {
@@ -43,6 +47,11 @@ impl AppContext {
         })?);
         let history_repo: Arc<dyn HistoryRepository> = history.clone();
         let queue = Arc::new(QueueProcessor::new(optimizer.clone()).with_history(history_repo));
+        let agent_access = Arc::new(AgentAccessManager::new(
+            queue.clone(),
+            history.clone(),
+            optimizer.clone(),
+        ));
         info!(
             engines = optimizer.engines().len(),
             "TinyDrop context initialized",
@@ -52,6 +61,7 @@ impl AppContext {
             active_preset: Arc::new(Mutex::new(CompressionPreset::Website)),
             queue,
             history,
+            agent_access,
         })
     }
 
@@ -68,6 +78,11 @@ impl AppContext {
     /// The history store.
     pub fn history(&self) -> Arc<SqliteHistory> {
         self.history.clone()
+    }
+
+    /// Local MCP server configuration and lifecycle manager.
+    pub fn agent_access(&self) -> Arc<AgentAccessManager> {
+        self.agent_access.clone()
     }
 
     /// The user's currently-selected preset.

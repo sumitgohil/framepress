@@ -133,3 +133,51 @@ pub async fn set_active_preset(
 ) -> Result<tinydrop_core::CompressionPreset, String> {
     settings::set_active_preset_inner(preset, ctx).await
 }
+
+/// Read the local MCP server configuration (the token is masked in the UI).
+#[tauri::command]
+pub async fn mcp_config(
+    ctx: State<'_, AppContext>,
+) -> Result<crate::mcp::AgentAccessConfig, String> {
+    Ok(ctx.agent_access().config().await)
+}
+
+/// Enable or disable TinyDrop's loopback-only MCP endpoint.
+#[tauri::command]
+pub async fn set_mcp_enabled(
+    enabled: bool,
+    ctx: State<'_, AppContext>,
+) -> Result<crate::mcp::McpServerStatus, String> {
+    ctx.agent_access().set_enabled(enabled).await
+}
+
+/// Return endpoint state for Settings and the connection test.
+#[tauri::command]
+pub async fn mcp_status(ctx: State<'_, AppContext>) -> Result<crate::mcp::McpServerStatus, String> {
+    Ok(ctx.agent_access().status().await)
+}
+
+/// Change local MCP configuration. The server restarts if its port changed.
+#[tauri::command]
+pub async fn update_mcp_config(
+    config: crate::mcp::AgentAccessConfig,
+    ctx: State<'_, AppContext>,
+) -> Result<crate::mcp::AgentAccessConfig, String> {
+    let was_running = ctx.agent_access().status().await.running;
+    if was_running {
+        ctx.agent_access().stop().await;
+    }
+    let next = ctx.agent_access().update_config(config).await?;
+    if next.enabled {
+        ctx.agent_access().start().await?;
+    }
+    Ok(next)
+}
+
+/// Generate a fresh local bearer token and restart the endpoint.
+#[tauri::command]
+pub async fn rotate_mcp_token(
+    ctx: State<'_, AppContext>,
+) -> Result<crate::mcp::AgentAccessConfig, String> {
+    ctx.agent_access().rotate_token().await
+}

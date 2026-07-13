@@ -14,6 +14,8 @@ import type {
   ScoredCandidate,
   StatsSnapshot,
   WebpCopy,
+  McpConfig,
+  McpServerStatus,
 } from './types';
 
 /** Liveness check. */
@@ -106,3 +108,9 @@ export async function exportWebpCopy(args: {
 export async function existingWebpCopy(inputPath: string): Promise<WebpCopy | null> {
   return invoke<WebpCopy | null>('existing_webp_copy', { inputPath });
 }
+
+export async function mcpConfig(): Promise<McpConfig> { return invoke<McpConfig>('mcp_config'); }
+export async function mcpStatus(): Promise<McpServerStatus> { return invoke<McpServerStatus>('mcp_status'); }
+export async function setMcpEnabled(enabled: boolean): Promise<McpServerStatus> { return invoke<McpServerStatus>('set_mcp_enabled', { enabled }); }
+export async function updateMcpConfig(config: McpConfig): Promise<McpConfig> { return invoke<McpConfig>('update_mcp_config', { config }); }
+export async function rotateMcpToken(): Promise<McpConfig> { return invoke<McpConfig>('rotate_mcp_token'); }

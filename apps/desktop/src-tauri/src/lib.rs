@@ -7,6 +7,7 @@
 
 pub mod commands;
 pub mod context;
+pub mod mcp;
 
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
@@ -39,12 +40,20 @@ pub fn run() {
                 Box::new(std::io::Error::other(e.to_string())) as Box<dyn std::error::Error>
             })?;
             let queue = ctx.queue();
+            let mcp = ctx.agent_access();
             app.manage(ctx);
 
             // `setup` runs before Tauri enters its async runtime, so defer
             // the queue worker until the runtime is available.
             tauri::async_runtime::spawn(async move {
                 queue.start();
+            });
+            tauri::async_runtime::spawn(async move {
+                if mcp.config().await.enabled {
+                    if let Err(error) = mcp.start().await {
+                        tracing::warn!(%error, "could not start configured MCP server");
+                    }
+                }
             });
 
             setup_tray(app.handle())?;
@@ -68,6 +77,11 @@ pub fn run() {
             commands::analytics_snapshot,
             commands::get_active_preset,
             commands::set_active_preset,
+            commands::mcp_config,
+            commands::mcp_status,
+            commands::set_mcp_enabled,
+            commands::update_mcp_config,
+            commands::rotate_mcp_token,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
