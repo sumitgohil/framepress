@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { FolderOpen, ExternalLink, AlertCircle, CheckCircle2, Image as ImageIcon } from 'lucide-svelte';
+  import { FolderOpen, ExternalLink, AlertCircle, CheckCircle2 } from 'lucide-svelte';
   import { revealItemInDir, openPath } from '@tauri-apps/plugin-opener';
 
+  import ImagePreview from '$lib/components/ImagePreview.svelte';
   import type { HistoryRow } from '$lib/ipc/types';
   import { format_bytes, format_relative } from '$lib/utils/format';
 
@@ -45,11 +46,7 @@
     class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
     aria-hidden="true"
   >
-    {#if row.thumbnail_path}
-      <img src="file://{row.thumbnail_path}" alt="" class="h-full w-full object-cover" />
-    {:else}
-      <ImageIcon size={16} />
-    {/if}
+    <ImagePreview paths={[row.thumbnail_path, row.output_path, row.input_path]} size={16} />
   </div>
 
   <div class="min-w-0 flex-1">
@@ -71,9 +68,9 @@
     </p>
   </div>
 
-  {#if row.status === 'Completed'}
+  {#if row.status === 'completed'}
     <CheckCircle2 size={16} class="shrink-0 text-[var(--color-success)]" />
-  {:else if row.status === 'Failed'}
+  {:else if row.status === 'failed'}
     <AlertCircle size={16} class="shrink-0 text-[var(--color-danger)]" />
   {/if}
 

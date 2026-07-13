@@ -5,15 +5,16 @@
 /** Format a byte count as a human-readable string. */
 export function format_bytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return '—';
-  if (bytes < 1024) return `${bytes} B`;
-  const units = ['KB', 'MB', 'GB', 'TB'];
-  let value = bytes / 1024;
-  let unit = 'KB';
-  for (let i = 0; i < units.length && value >= 1024; i++) {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = bytes;
+  let unit_index = 0;
+
+  while (value >= 1024 && unit_index < units.length - 1) {
     value /= 1024;
-    unit = units[i];
+    unit_index += 1;
   }
-  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${unit}`;
+
+  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${units[unit_index]}`;
 }
 
 /** Format a savings ratio (0..1) as a percentage. */

@@ -78,7 +78,8 @@ export type HistoryRow = {
   optimized_bytes: number | null;
   engine: string | null;
   preset: CompressionPreset;
-  status: 'Completed' | 'Failed' | 'Cancelled';
+  /** Serialized Rust `HistoryStatus` values use snake case. */
+  status: 'completed' | 'failed' | 'cancelled';
   error_message: string | null;
   started_at: number;
   completed_at: number | null;

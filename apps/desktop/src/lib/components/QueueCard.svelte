@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2, Image as ImageIcon } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2 } from 'lucide-svelte';
 
+  import ImagePreview from '$lib/components/ImagePreview.svelte';
   import type { QueueItem } from '$lib/ipc/types';
   import { format_bytes } from '$lib/utils/format';
   import { cn } from '$lib/utils/cn';
@@ -65,11 +66,7 @@
       class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
       aria-hidden="true"
     >
-      {#if item.output_path}
-        <img src="file://{item.output_path}" alt="" class="h-full w-full object-cover" />
-      {:else}
-        <ImageIcon size={20} />
-      {/if}
+      <ImagePreview paths={[item.output_path, item.input_path]} size={20} />
     </div>
 
     <!-- Middle: name + status -->

@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { CheckCircle2, Image } from 'lucide-svelte';
+  import { CheckCircle2, CircleDashed, Image, XCircle } from 'lucide-svelte';
 
+  import ImagePreview from '$lib/components/ImagePreview.svelte';
   import type { HistoryRow } from '$lib/ipc/types';
   import { format_bytes, format_relative } from '$lib/utils/format';
 
@@ -47,11 +48,7 @@
                 class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
                 aria-hidden="true"
               >
-                {#if row.thumbnail_path}
-                  <img src="file://{row.thumbnail_path}" alt="" class="h-full w-full object-cover" />
-                {:else}
-                  <Image size={18} />
-                {/if}
+                <ImagePreview paths={[row.thumbnail_path, row.output_path, row.input_path]} size={18} />
               </div>
               <div class="min-w-0">
                 <p class="truncate text-sm font-semibold tracking-tight">
@@ -77,10 +74,14 @@
 
             <div class="flex min-w-20 items-center justify-end gap-3 text-xs text-[var(--color-muted-foreground)]">
               <span class="hidden md:inline">{format_relative(row.completed_at ?? row.started_at)}</span>
-              {#if row.status === 'Completed'}
+              {#if row.status === 'completed'}
                 <CheckCircle2 size={19} strokeWidth={2.25} class="text-[var(--color-success)]" />
+              {:else if row.status === 'failed'}
+                <XCircle size={19} strokeWidth={2.25} class="text-[var(--color-danger)]" />
+              {:else if row.status === 'cancelled'}
+                <CircleDashed size={19} strokeWidth={2.25} class="text-[var(--color-muted-foreground)]" />
               {:else}
-                <span class="h-2.5 w-2.5 rounded-full bg-[var(--color-warning)]" title={row.status}></span>
+                <CircleDashed size={19} strokeWidth={2.25} class="animate-spin text-[var(--color-brand-500)]" />
               {/if}
             </div>
           </article>
