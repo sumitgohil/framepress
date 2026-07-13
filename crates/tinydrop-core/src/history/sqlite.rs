@@ -225,7 +225,10 @@ impl SqliteHistory {
         };
 
         let trend = build_trend(&entries, range, today, start_date);
-        let formats = build_breakdown(&entries, |entry| entry.format.clone());
+        // The dashboard is about the file the user supplied, not the output
+        // representation. This keeps optional WebP exports attributed to the
+        // original PNG/JPEG source.
+        let formats = build_breakdown(&entries, source_format);
         let presets = build_breakdown(&entries, |entry| entry.preset.clone());
         let biggest_wins = build_biggest_wins(entries);
 
@@ -417,6 +420,15 @@ fn build_breakdown(
     breakdown
 }
 
+fn source_format(entry: &HistoryEntry) -> String {
+    std::path::Path::new(&entry.input_path)
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .filter(|extension| !extension.is_empty())
+        .map(|extension| extension.to_ascii_uppercase())
+        .unwrap_or_else(|| entry.format.to_ascii_uppercase())
+}
+
 fn build_biggest_wins(mut entries: Vec<HistoryEntry>) -> Vec<BiggestWin> {
     entries.sort_by_key(|entry| {
         std::cmp::Reverse(
@@ -600,7 +612,7 @@ mod tests {
         // participate in the user's selected savings accounting.
         store
             .insert(&history_entry(
-                "/tmp/a-tinydrop.webp",
+                "/tmp/a.png",
                 "WEBP",
                 "maximum_compression",
                 2_000,
@@ -616,7 +628,8 @@ mod tests {
         assert_eq!(analytics.optimized_count, 2);
         assert_eq!(analytics.input_bytes, 3_000);
         assert_eq!(analytics.saved_bytes, 2_100);
-        assert_eq!(analytics.formats.len(), 2);
+        assert_eq!(analytics.formats.len(), 1);
+        assert_eq!(analytics.formats[0].key, "PNG");
         assert_eq!(analytics.presets.len(), 2);
         assert_eq!(analytics.biggest_wins[0].format, "WEBP");
         assert_eq!(analytics.biggest_wins[0].saved_bytes, 1_500);
