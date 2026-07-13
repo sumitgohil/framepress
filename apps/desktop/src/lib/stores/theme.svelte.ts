@@ -43,23 +43,22 @@ function apply(resolved: ResolvedTheme) {
 
 function create_theme_store() {
   let mode = $state<ThemeMode>(read_initial_mode());
-  let resolved = $state<ResolvedTheme>('light');
+  let resolved = $state<ResolvedTheme>(resolve(mode));
 
-  // React to system preference changes when in 'system' mode.
-  $effect(() => {
-    if (!browser) return;
-    resolved = resolve(mode);
+  // Stores are created at module initialization, outside a component's
+  // lifecycle. A `$effect` here throws `effect_orphan` in Svelte 5 and turns
+  // route navigation into the error page. A normal media-query listener keeps
+  // the system mode responsive without depending on component ownership.
+  if (browser) {
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => {
+    mql.addEventListener('change', () => {
       if (mode === 'system') {
         resolved = resolve('system');
         apply(resolved);
       }
-    };
-    mql.addEventListener('change', handler);
+    });
     apply(resolved);
-    return () => mql.removeEventListener('change', handler);
-  });
+  }
 
   return {
     get mode() {
