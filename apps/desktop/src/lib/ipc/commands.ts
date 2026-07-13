@@ -6,7 +6,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 
-import type { CompressionPreset, HistoryRow, ScoredCandidate, StatsSnapshot } from './types';
+import type { CompressionPreset, HistoryRow, ScoredCandidate, StatsSnapshot, WebpCopy } from './types';
 
 /** Liveness check. */
 export async function ping(): Promise<string> {
@@ -76,4 +76,15 @@ export async function optimizeOne(args: {
   outputPath: string;
 }): Promise<ScoredCandidate> {
   return invoke<ScoredCandidate>('optimize_one', { args });
+}
+
+/** Create a separate WebP sibling after the user opts in from the queue. */
+export async function exportWebpCopy(args: {
+  inputPath: string;
+  preset: CompressionPreset;
+}): Promise<WebpCopy> {
+  return invoke<WebpCopy>('export_webp_copy', {
+    inputPath: args.inputPath,
+    preset: args.preset,
+  });
 }

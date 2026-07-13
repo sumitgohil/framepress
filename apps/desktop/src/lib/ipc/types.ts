@@ -35,6 +35,12 @@ export type ScoredCandidate = {
   margin_pct_vs_runner_up: number | null;
 };
 
+/** A user-requested WebP copy generated beside the preserved original format. */
+export type WebpCopy = {
+  output_path: string;
+  optimized_bytes: number;
+};
+
 // ---------------------------------------------------------------------------
 // Queue types (Branch 5)
 // ---------------------------------------------------------------------------

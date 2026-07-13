@@ -56,6 +56,7 @@ pub fn run() {
             commands::show_main_window,
             commands::optimize_paths,
             commands::optimize_one,
+            commands::export_webp_copy,
             commands::cancel_job,
             commands::pause_queue,
             commands::resume_queue,

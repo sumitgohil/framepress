@@ -32,6 +32,13 @@ pub struct OptimizeOneArgs {
     pub output_path: String,
 }
 
+/// Details of an explicitly requested WebP copy.
+#[derive(Debug, Clone, Serialize)]
+pub struct WebpCopyDto {
+    pub output_path: String,
+    pub optimized_bytes: u64,
+}
+
 /// Expand dropped files and folders into a stable, de-duplicated image list.
 ///
 /// Folder traversal intentionally happens in the desktop process rather than
@@ -136,8 +143,9 @@ pub async fn optimize_paths(
 #[cfg(test)]
 mod tests {
     use std::fs;
+    use std::path::Path;
 
-    use super::expand_image_paths;
+    use super::{expand_image_paths, webp_copy_output_path};
 
     #[test]
     fn expands_nested_folders_and_skips_unsupported_or_generated_files() {
@@ -166,6 +174,14 @@ mod tests {
         let paths = expand_image_paths([dir.path().to_path_buf(), image.clone()]).unwrap();
 
         assert_eq!(paths, vec![image]);
+    }
+
+    #[test]
+    fn webp_copy_path_is_a_sibling_with_a_webp_extension() {
+        assert_eq!(
+            webp_copy_output_path(Path::new("/images/banner.png")),
+            Path::new("/images/banner-tinydrop.webp")
+        );
     }
 }
 
@@ -213,6 +229,46 @@ pub async fn optimize_one(
         .map_err(|e| format!("{e}"))?;
 
     Ok(result.into())
+}
+
+/// Create a WebP sibling only after the user explicitly requests it.
+pub async fn export_webp_copy(
+    input_path: String,
+    preset: CompressionPreset,
+    ctx: &AppContext,
+) -> Result<WebpCopyDto, String> {
+    let input = PathBuf::from(input_path);
+    let format = detect_format(&input).map_err(|error| error.to_string())?;
+    if !matches!(format, ImageFormat::Png | ImageFormat::Jpeg) {
+        return Err("WebP copies can be created from PNG or JPEG files only.".to_string());
+    }
+
+    let output = webp_copy_output_path(&input);
+    let settings = ctx.optimizer().resolve_settings(preset, format);
+    let optimizer = ctx.optimizer().clone();
+    let input_for_task = input.clone();
+    let output_for_task = output.clone();
+
+    let result = task::spawn_blocking(move || {
+        optimizer.run_single("webp", &input_for_task, &output_for_task, &settings)
+    })
+    .await
+    .map_err(|error| format!("WebP export worker panicked: {error}"))?
+    .map_err(|error| error.to_string())?;
+
+    Ok(WebpCopyDto {
+        output_path: result.output_path.to_string_lossy().to_string(),
+        optimized_bytes: result.optimized_bytes,
+    })
+}
+
+fn webp_copy_output_path(input: &Path) -> PathBuf {
+    let stem = input
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("image");
+    let parent = input.parent().unwrap_or_else(|| Path::new("."));
+    parent.join(format!("{stem}-tinydrop.webp"))
 }
 
 #[allow(dead_code)]

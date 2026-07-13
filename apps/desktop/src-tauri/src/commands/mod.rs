@@ -78,6 +78,16 @@ pub async fn optimize_one(
     optimize::optimize_one(args, &ctx).await
 }
 
+/// Create an explicitly requested WebP copy alongside an existing PNG/JPEG.
+#[tauri::command]
+pub async fn export_webp_copy(
+    input_path: String,
+    preset: tinydrop_core::CompressionPreset,
+    ctx: State<'_, AppContext>,
+) -> Result<optimize::WebpCopyDto, String> {
+    optimize::export_webp_copy(input_path, preset, &ctx).await
+}
+
 #[tauri::command]
 pub async fn recent_history(
     limit: u32,

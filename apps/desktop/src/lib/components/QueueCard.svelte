@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2, Sparkles } from 'lucide-svelte';
+  import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2, Sparkles, FolderOpen } from 'lucide-svelte';
+  import { revealItemInDir } from '@tauri-apps/plugin-opener';
 
   import ImagePreview from '$lib/components/ImagePreview.svelte';
+  import { exportWebpCopy } from '$lib/ipc/commands';
   import type { QueueItem } from '$lib/ipc/types';
+  import { toast } from '$lib/stores/toast.svelte';
   import { format_bytes } from '$lib/utils/format';
   import { cn } from '$lib/utils/cn';
 
@@ -13,6 +16,8 @@
 
   let { item, oncancel }: Props = $props();
   let expanded = $state(false);
+  let exporting_webp = $state(false);
+  let webp_copy_path = $state<string | null>(null);
 
   let filename = $derived(item.input_path.split('/').pop() ?? item.input_path);
   let webp_recommendation = $derived(item.format === 'png' || item.format === 'jpeg');
@@ -54,6 +59,29 @@
     if (item.status === 'running') return 50; // indeterminate mid-flight
     return 5;
   });
+
+  async function create_webp_copy() {
+    if (exporting_webp) return;
+    exporting_webp = true;
+    try {
+      const copy = await exportWebpCopy({ inputPath: item.input_path, preset: item.preset });
+      webp_copy_path = copy.output_path;
+      toast.success('WebP copy created', `${format_bytes(copy.optimized_bytes)} · original PNG unchanged`);
+    } catch (error) {
+      toast.error('WebP export failed', String(error));
+    } finally {
+      exporting_webp = false;
+    }
+  }
+
+  async function show_webp_copy() {
+    if (!webp_copy_path) return;
+    try {
+      await revealItemInDir(webp_copy_path);
+    } catch {
+      toast.error('Could not show WebP copy', 'The output may have been moved or deleted.');
+    }
+  }
 </script>
 
 <article
@@ -144,6 +172,19 @@
           <span>
             Need a smaller web asset? Export a separate WebP copy when your destination supports it—this {item.format?.toUpperCase()} stays unchanged.
           </span>
+          <button
+            type="button"
+            class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md bg-[var(--color-brand-500)] px-2.5 py-1.5 font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+            onclick={webp_copy_path ? show_webp_copy : create_webp_copy}
+            disabled={exporting_webp}
+          >
+            {#if webp_copy_path}
+              <FolderOpen size={13} aria-hidden="true" />
+              Show WebP
+            {:else}
+              {exporting_webp ? 'Creating…' : 'Create WebP copy'}
+            {/if}
+          </button>
         </div>
       {/if}
     </div>
