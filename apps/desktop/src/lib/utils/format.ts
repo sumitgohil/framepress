@@ -2,15 +2,16 @@
  * Display formatters used by stat cards, queue rows, and history rows.
  */
 
-/** Format a byte count as a human-readable string. */
+/** Format a byte count using Finder-compatible decimal (base-1000) units. */
 export function format_bytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes < 0) return '—';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const unit_base = 1000;
   let value = bytes;
   let unit_index = 0;
 
-  while (value >= 1024 && unit_index < units.length - 1) {
-    value /= 1024;
+  while (value >= unit_base && unit_index < units.length - 1) {
+    value /= unit_base;
     unit_index += 1;
   }
 
