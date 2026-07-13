@@ -6,6 +6,7 @@
   import ImagePreview from '$lib/components/ImagePreview.svelte';
   import { existingWebpCopy, exportWebpCopy } from '$lib/ipc/commands';
   import type { QueueItem } from '$lib/ipc/types';
+  import { PRESET_LABELS } from '$lib/stores/settings.svelte';
   import { toast } from '$lib/stores/toast.svelte';
   import { format_bytes } from '$lib/utils/format';
   import { cn } from '$lib/utils/cn';
@@ -22,6 +23,7 @@
 
   let filename = $derived(item.input_path.split('/').pop() ?? item.input_path);
   let webp_recommendation = $derived(item.format === 'png' || item.format === 'jpeg');
+  let preset_label = $derived(PRESET_LABELS[item.preset]);
 
   let status_label = $derived.by(() => {
     switch (item.status) {
@@ -137,6 +139,8 @@
           <span aria-hidden="true">·</span>
           <span>via {item.engine}</span>
         {/if}
+        <span aria-hidden="true">·</span>
+        <span>{preset_label}</span>
         {#if item.original_bytes !== null}
           <span aria-hidden="true">·</span>
           <span class="font-mono tabular-nums">
