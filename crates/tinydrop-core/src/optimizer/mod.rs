@@ -213,17 +213,20 @@ impl AdaptiveOptimizer {
         let scored = score_candidates(input, &candidates, &scratch);
 
         // Mirror ImageOptim's lossy policy: don't replace a file for a
-        // token-size win. A lossy result must save at least 5%; otherwise we
-        // keep the original untouched. Lossless presets are allowed to keep
-        // any byte-for-byte improvement.
+        // token-size win. The 5% threshold applies only to lossy candidates.
+        // A lossless re-pack is always safe to keep when it is smaller, even
+        // if its saving is modest. Applying this threshold to every candidate
+        // previously discarded oxipng's valid output for lossy presets, which
+        // made the queue silently copy the original instead.
         let scored = if builtin_spec(preset).lossless {
             scored
         } else {
             scored
                 .into_iter()
                 .filter(|candidate| {
-                    candidate.result.optimized_bytes.saturating_mul(100)
-                        <= candidate.result.original_bytes.saturating_mul(95)
+                    candidate.result.dssim.is_some_and(|dssim| dssim == 0.0)
+                        || candidate.result.optimized_bytes.saturating_mul(100)
+                            <= candidate.result.original_bytes.saturating_mul(95)
                 })
                 .collect()
         };
@@ -432,6 +435,25 @@ mod tests {
             Some("png")
         );
         assert!(winner.result.optimized_bytes <= winner.result.original_bytes);
+    }
+
+    #[test]
+    fn website_preset_compresses_ads1_png() {
+        let opt = AdaptiveOptimizer::new(default_registry());
+        let input = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|path| path.parent())
+            .expect("workspace root")
+            .join("SampleImages/Ads1.png");
+        let dir = tempdir().unwrap();
+        let output = dir.path().join("Ads1-tinydrop.png");
+
+        let result = opt
+            .optimize(&input, CompressionPreset::Website, &output)
+            .expect("website optimization should complete");
+
+        assert_ne!(result.result.engine, "original");
+        assert!(result.result.optimized_bytes < result.result.original_bytes);
     }
 
     #[test]

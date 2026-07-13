@@ -14,16 +14,12 @@ const STORAGE_KEY = 'tinydrop:settings';
 
 export type SettingsState = {
   default_preset: CompressionPreset;
-  dssim_threshold: number;
   output_behavior: 'sidecar' | 'in-place';
-  show_advanced: boolean;
 };
 
 const DEFAULTS: SettingsState = {
   default_preset: 'website',
-  dssim_threshold: 0.001,
   output_behavior: 'sidecar',
-  show_advanced: false,
 };
 
 function read_initial(): SettingsState {

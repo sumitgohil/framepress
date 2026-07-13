@@ -199,6 +199,13 @@ impl AgentAccessManager {
                 },
                 Default::default(),
                 StreamableHttpServerConfig {
+                    // TinyDrop only serves independent request/response tool
+                    // calls. Keeping MCP's in-memory stream sessions would
+                    // make a client-held session ID invalid after an app
+                    // restart, despite its bearer token still being valid.
+                    // Stateless mode deliberately ignores those stale IDs and
+                    // lets clients continue using the same saved connection.
+                    stateful_mode: false,
                     cancellation_token: cancel.child_token(),
                     ..Default::default()
                 },

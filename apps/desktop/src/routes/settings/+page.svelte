@@ -2,14 +2,12 @@
   import { onMount } from 'svelte';
   import { settings, PRESET_LABELS, PRESET_DESCRIPTIONS } from '$lib/stores/settings.svelte';
   import { theme } from '$lib/stores/theme.svelte';
-  import { Sun, Moon, Monitor, Sliders, Server, Copy, RefreshCw, Plus, X, CheckCircle2 } from 'lucide-svelte';
+  import { Sun, Moon, Monitor, Server, Copy, RefreshCw, Plus, X, CheckCircle2 } from 'lucide-svelte';
   import { mcpConfig, mcpStatus, rotateMcpToken, setMcpEnabled, updateMcpConfig } from '$lib/ipc/commands';
   import type { CompressionPreset, McpConfig, McpServerStatus } from '$lib/ipc/types';
   import { PRESET_KEYS } from '$lib/ipc/types';
 
   let preset: CompressionPreset = $derived(settings.value.default_preset);
-  let threshold = $state(settings.value.dssim_threshold);
-  let advanced = $state(settings.value.show_advanced);
   let agentConfig = $state<McpConfig | null>(null);
   let agentStatus = $state<McpServerStatus | null>(null);
   let rootInput = $state('');
@@ -17,18 +15,31 @@
   let connectionMessage = $state<string | null>(null);
   let agentError = $state<string | null>(null);
 
-  onMount(async () => {
-    try { [agentConfig, agentStatus] = await Promise.all([mcpConfig(), mcpStatus()]); }
-    catch (error) { agentError = String(error); }
+  async function refreshAgentStatus() {
+    try {
+      agentStatus = await mcpStatus();
+      agentError = null;
+    } catch (error) {
+      agentError = String(error);
+    }
+  }
+
+  onMount(() => {
+    void (async () => {
+      try {
+        [agentConfig, agentStatus] = await Promise.all([mcpConfig(), mcpStatus()]);
+        agentError = null;
+      } catch (error) {
+        agentError = String(error);
+      }
+    })();
+
+    const statusPoll = window.setInterval(() => void refreshAgentStatus(), 2_000);
+    return () => window.clearInterval(statusPoll);
   });
 
   function set_preset(value: CompressionPreset) {
     settings.set({ default_preset: value });
-  }
-
-  function set_threshold(value: number) {
-    threshold = Math.max(0, Math.min(0.05, value));
-    settings.set({ dssim_threshold: threshold });
   }
 
   async function toggleAgentAccess(enabled: boolean) {
@@ -158,50 +169,4 @@
     {#if agentError}<p class="mt-3 text-xs text-red-400">{agentError}</p>{/if}
   </section>
 
-  <!-- Advanced -->
-  <section class="glass rounded-2xl p-5" aria-label="Advanced">
-    <button
-      type="button"
-      class="flex w-full items-center justify-between gap-2"
-      onclick={() => {
-        advanced = !advanced;
-        settings.set({ show_advanced: advanced });
-      }}
-      aria-expanded={advanced}
-    >
-      <h2 class="flex items-center gap-2 text-sm font-semibold tracking-tight">
-        <Sliders size={14} />
-        Advanced
-      </h2>
-      <span class="text-xs text-[var(--color-muted-foreground)]">{advanced ? 'Hide' : 'Show'}</span>
-    </button>
-
-    {#if advanced}
-      <div class="mt-4 space-y-4 border-t border-[var(--color-border)] pt-4">
-        <div>
-          <label for="dssim" class="block text-sm font-medium">
-            DSSIM threshold
-            <span class="ml-1 text-xs font-normal text-[var(--color-muted-foreground)]">
-              lower = closer to original
-            </span>
-          </label>
-          <div class="mt-2 flex items-center gap-3">
-            <input
-              id="dssim"
-              type="range"
-              min="0"
-              max="0.05"
-              step="0.0005"
-              value={threshold}
-              oninput={(e) => set_threshold(Number((e.target as HTMLInputElement).value))}
-              class="flex-1 accent-[var(--color-brand-500)]"
-            />
-            <span class="w-16 text-right font-mono text-xs tabular-nums">
-              {threshold.toFixed(4)}
-            </span>
-          </div>
-        </div>
-      </div>
-    {/if}
-  </section>
 </div>

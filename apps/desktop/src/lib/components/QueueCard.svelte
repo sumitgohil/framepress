@@ -236,7 +236,7 @@
             <span class="flex items-center gap-3 font-mono tabular-nums text-[var(--color-muted-foreground)]">
               <span>{format_bytes(log.output_bytes)}</span>
               {#if log.dssim !== null}
-                <span class="text-[10px]">dssim {log.dssim.toFixed(4)}</span>
+                <span class="text-[10px]">visual difference {log.dssim.toFixed(4)}</span>
               {/if}
             </span>
           </li>

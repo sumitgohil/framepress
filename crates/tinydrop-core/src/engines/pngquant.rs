@@ -92,7 +92,7 @@ impl CompressionEngine for PngQuantEngine {
                 message: format!("could not set palette size: {error}"),
             })?;
         attributes
-            .set_quality(0, 0)
+            .set_quality(0, target_quality)
             .map_err(|error| CoreError::Engine {
                 engine: self.name().to_string(),
                 message: format!("could not configure quality: {error}"),
