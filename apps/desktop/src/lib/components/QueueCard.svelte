@@ -1,9 +1,10 @@
 <script lang="ts">
   import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2, Sparkles, FolderOpen } from 'lucide-svelte';
   import { revealItemInDir } from '@tauri-apps/plugin-opener';
+  import { onMount } from 'svelte';
 
   import ImagePreview from '$lib/components/ImagePreview.svelte';
-  import { exportWebpCopy } from '$lib/ipc/commands';
+  import { existingWebpCopy, exportWebpCopy } from '$lib/ipc/commands';
   import type { QueueItem } from '$lib/ipc/types';
   import { toast } from '$lib/stores/toast.svelte';
   import { format_bytes } from '$lib/utils/format';
@@ -60,13 +61,23 @@
     return 5;
   });
 
+  onMount(async () => {
+    if (!webp_recommendation) return;
+    try {
+      const copy = await existingWebpCopy(item.input_path);
+      webp_copy_path = copy?.output_path ?? null;
+    } catch {
+      // The export affordance remains available when the file check is unavailable.
+    }
+  });
+
   async function create_webp_copy() {
     if (exporting_webp) return;
     exporting_webp = true;
     try {
       const copy = await exportWebpCopy({ inputPath: item.input_path, preset: item.preset });
       webp_copy_path = copy.output_path;
-      toast.success('WebP copy created', `${format_bytes(copy.optimized_bytes)} · original PNG unchanged`);
+      toast.success('WebP copy created', `${format_bytes(copy.optimized_bytes)} · original unchanged`);
     } catch (error) {
       toast.error('WebP export failed', String(error));
     } finally {
@@ -180,7 +191,7 @@
           >
             {#if webp_copy_path}
               <FolderOpen size={13} aria-hidden="true" />
-              Show WebP
+              Show WebP copy
             {:else}
               {exporting_webp ? 'Creating…' : 'Create WebP copy'}
             {/if}

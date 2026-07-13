@@ -83,9 +83,16 @@ pub async fn optimize_one(
 pub async fn export_webp_copy(
     input_path: String,
     preset: tinydrop_core::CompressionPreset,
+    app: tauri::AppHandle,
     ctx: State<'_, AppContext>,
 ) -> Result<optimize::WebpCopyDto, String> {
-    optimize::export_webp_copy(input_path, preset, &ctx).await
+    optimize::export_webp_copy(input_path, preset, app, &ctx).await
+}
+
+/// Locate a previously created WebP sibling for a source file.
+#[tauri::command]
+pub fn existing_webp_copy(input_path: String) -> Option<optimize::WebpCopyDto> {
+    optimize::existing_webp_copy(input_path)
 }
 
 #[tauri::command]

@@ -10,7 +10,7 @@ use tokio::sync::Notify;
 use tokio::task::JoinHandle;
 use tracing::{debug, info, warn};
 
-use crate::domain::{CompressionPreset, ScoredCandidate};
+use crate::domain::{CompressionPreset, CompressionResult, ScoredCandidate};
 use crate::errors::CoreError;
 use crate::history::{HistoryEntry, HistoryRepository, HistoryStatus};
 use crate::optimizer::AdaptiveOptimizer;
@@ -116,6 +116,72 @@ impl QueueProcessor {
         self.wake.notify_one();
         info!(job_id = %id, "enqueued");
         Ok(id)
+    }
+
+    /// Record a completed, user-requested derivative without sending it back
+    /// through the worker. Used for explicit exports such as a WebP copy.
+    pub fn record_completed_export(
+        &self,
+        source_path: PathBuf,
+        preset: CompressionPreset,
+        result: CompressionResult,
+    ) -> QueueItem {
+        let completed_at = now_millis();
+        let item = QueueItem {
+            id: format!("export-{}", next_id_seq(&result.output_path)),
+            // Display the created file in the queue, while history below
+            // retains the source path that the user acted on.
+            input_path: result.output_path.clone(),
+            output_path: Some(result.output_path.clone()),
+            format: Some(result.format),
+            preset,
+            status: JobStatus::Completed,
+            original_bytes: Some(result.original_bytes),
+            optimized_bytes: Some(result.optimized_bytes),
+            engine: Some(result.engine.clone()),
+            dssim: result.dssim,
+            savings_pct: Some(result.savings_pct()),
+            margin_pct: None,
+            error_message: None,
+            candidates_log: Some(vec![CandidateLogEntry {
+                engine: result.engine.clone(),
+                output_bytes: result.optimized_bytes,
+                dssim: result.dssim,
+                passed_gate: true,
+            }]),
+            started_at: Some(completed_at),
+            completed_at: Some(completed_at),
+        };
+        {
+            let mut state = self.state.lock().expect("queue state poisoned");
+            state.push_pending(item.clone());
+        }
+        self.stats.completed.fetch_add(1, Ordering::SeqCst);
+
+        if let Some(history) = &self.history {
+            let entry = HistoryEntry {
+                id: 0,
+                input_path: source_path.to_string_lossy().to_string(),
+                output_path: Some(result.output_path.to_string_lossy().to_string()),
+                format: result.format.to_string(),
+                original_bytes: result.original_bytes,
+                optimized_bytes: Some(result.optimized_bytes),
+                engine: Some(result.engine),
+                preset: preset.label().to_string(),
+                status: HistoryStatus::Completed,
+                error_message: None,
+                started_at: completed_at,
+                completed_at: Some(completed_at),
+                dssim: result.dssim,
+                margin_pct: None,
+                thumbnail_path: None,
+            };
+            if let Err(error) = history.record_via_entry(&entry) {
+                warn!(error = %error, "failed to record WebP export in history");
+            }
+        }
+
+        item
     }
 
     /// Cancel a queued or running job.
@@ -541,5 +607,31 @@ mod tests {
         let snap = proc.snapshot();
         let item = snap.iter().find(|i| i.id == id).unwrap();
         assert_eq!(item.status, JobStatus::Cancelled);
+    }
+
+    #[tokio::test]
+    async fn completed_export_is_visible_in_the_queue_snapshot() {
+        let (proc, _) = build_processor();
+        let result = CompressionResult {
+            engine: "webp".to_string(),
+            output_path: PathBuf::from("/tmp/image-tinydrop.webp"),
+            format: crate::domain::ImageFormat::WebP,
+            original_bytes: 1_000,
+            optimized_bytes: 250,
+            dssim: None,
+            duration_ms: 0,
+        };
+
+        let item = proc.record_completed_export(
+            PathBuf::from("/tmp/image.png"),
+            CompressionPreset::Website,
+            result,
+        );
+
+        assert_eq!(item.status, JobStatus::Completed);
+        let snapshot = proc.snapshot();
+        assert_eq!(snapshot.len(), 1);
+        assert_eq!(snapshot[0].id, item.id);
+        assert_eq!(snapshot[0].input_path, item.input_path);
     }
 }

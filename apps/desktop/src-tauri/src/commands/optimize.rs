@@ -235,6 +235,7 @@ pub async fn optimize_one(
 pub async fn export_webp_copy(
     input_path: String,
     preset: CompressionPreset,
+    app: AppHandle,
     ctx: &AppContext,
 ) -> Result<WebpCopyDto, String> {
     let input = PathBuf::from(input_path);
@@ -244,6 +245,9 @@ pub async fn export_webp_copy(
     }
 
     let output = webp_copy_output_path(&input);
+    if let Some(copy) = existing_webp_copy(input.to_string_lossy().to_string()) {
+        return Ok(copy);
+    }
     let settings = ctx.optimizer().resolve_settings(preset, format);
     let optimizer = ctx.optimizer().clone();
     let input_for_task = input.clone();
@@ -256,9 +260,26 @@ pub async fn export_webp_copy(
     .map_err(|error| format!("WebP export worker panicked: {error}"))?
     .map_err(|error| error.to_string())?;
 
-    Ok(WebpCopyDto {
+    let copy = WebpCopyDto {
         output_path: result.output_path.to_string_lossy().to_string(),
         optimized_bytes: result.optimized_bytes,
+    };
+    let queue_item = ctx.queue().record_completed_export(input, preset, result);
+    let _ = app.emit("queue:item_updated", queue_item);
+
+    Ok(copy)
+}
+
+/// Return an already-created WebP sibling, if it still exists on disk.
+pub fn existing_webp_copy(input_path: String) -> Option<WebpCopyDto> {
+    let output = webp_copy_output_path(Path::new(&input_path));
+    let metadata = std::fs::metadata(&output).ok()?;
+    if !metadata.is_file() {
+        return None;
+    }
+    Some(WebpCopyDto {
+        output_path: output.to_string_lossy().to_string(),
+        optimized_bytes: metadata.len(),
     })
 }
 

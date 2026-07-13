@@ -88,3 +88,8 @@ export async function exportWebpCopy(args: {
     preset: args.preset,
   });
 }
+
+/** Return an already-created WebP sibling if it is still available on disk. */
+export async function existingWebpCopy(inputPath: string): Promise<WebpCopy | null> {
+  return invoke<WebpCopy | null>('existing_webp_copy', { inputPath });
+}
