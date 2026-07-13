@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ArrowDown, ArrowUp, BarChart3, FolderOpen, Image as ImageIcon, LoaderCircle, Sparkles, TrendingDown } from 'lucide-svelte';
+  import { FolderOpen, LoaderCircle, Sparkles, TrendingDown } from 'lucide-svelte';
   import { revealItemInDir } from '@tauri-apps/plugin-opener';
 
   import ImagePreview from '$lib/components/ImagePreview.svelte';
   import { analyticsSnapshot } from '$lib/ipc/commands';
-  import type { AnalyticsRange, AnalyticsSnapshot, BiggestWin, SavingsTrendPoint } from '$lib/ipc/types';
+  import type { AnalyticsRange, AnalyticsSnapshot, BiggestWin } from '$lib/ipc/types';
   import { PRESET_LABELS } from '$lib/stores/settings.svelte';
   import { format_bytes } from '$lib/utils/format';
 
@@ -15,6 +15,12 @@
     { key: 'all', label: 'All time' },
   ];
   const chart_colors = ['var(--color-brand-400)', 'var(--color-success)', 'var(--color-info)', 'var(--color-warning)', 'var(--color-brand-200)'];
+  const chart_width = 720;
+  const chart_height = 240;
+  const chart_left = 12;
+  const chart_right = 12;
+  const chart_top = 14;
+  const chart_bottom = 28;
 
   let range = $state<AnalyticsRange>('7d');
   let analytics = $state<AnalyticsSnapshot | null>(null);
@@ -61,11 +67,11 @@
   let max_saved = $derived(Math.max(...trend.map((point) => point.saved_bytes), 1));
   let chart_points = $derived.by(() => trend.map((point, index) => ({
     ...point,
-    x: trend.length <= 1 ? 50 : 4 + (index / (trend.length - 1)) * 92,
-    y: 88 - (point.saved_bytes / max_saved) * 68,
+    x: trend.length <= 1 ? chart_width / 2 : chart_left + (index / (trend.length - 1)) * (chart_width - chart_left - chart_right),
+    y: chart_height - chart_bottom - (point.saved_bytes / max_saved) * (chart_height - chart_top - chart_bottom),
   })));
   let line_path = $derived(chart_points.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' '));
-  let area_path = $derived(chart_points.length ? `${line_path} L 96 92 L 4 92 Z` : '');
+  let area_path = $derived(chart_points.length ? `${line_path} L ${chart_width - chart_right} ${chart_height - chart_bottom} L ${chart_left} ${chart_height - chart_bottom} Z` : '');
   let format_total = $derived(analytics?.formats.reduce((total, item) => total + item.saved_bytes, 0) ?? 0);
   let format_gradient = $derived.by(() => {
     if (!analytics?.formats.length || format_total === 0) return 'conic-gradient(var(--color-muted) 0 100%)';
@@ -125,15 +131,18 @@
     {:else}
       <section class="glass rounded-2xl p-5">
         <div class="flex items-start justify-between gap-4"><div><h2 class="font-semibold">Savings over time</h2><p class="mt-1 text-sm text-[var(--color-muted-foreground)]">Bytes removed from completed optimizations.</p></div><TrendingDown size={20} class="text-[var(--color-brand-400)]" /></div>
-        <div class="relative mt-5 h-64">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="h-full w-full overflow-visible" role="img" aria-label="Savings trend chart">
+        <div class="relative mt-5 h-64 overflow-hidden rounded-xl bg-[var(--color-muted)]/25">
+          <svg viewBox={`0 0 ${chart_width} ${chart_height}`} preserveAspectRatio="none" class="h-full w-full" role="img" aria-label="Savings trend chart">
             <defs><linearGradient id="statistics-area" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="var(--color-brand-400)" stop-opacity="0.42" /><stop offset="100%" stop-color="var(--color-brand-400)" stop-opacity="0" /></linearGradient></defs>
-            <path d="M 4 92 L 96 92" stroke="var(--color-border)" stroke-width="0.6" />
-            <path d="M 4 58 L 96 58" stroke="var(--color-border)" stroke-width="0.4" stroke-dasharray="1.5 1.5" />
+            {#each [chart_top, (chart_top + chart_height - chart_bottom) / 2, chart_height - chart_bottom] as y}
+              <path d={`M ${chart_left} ${y} L ${chart_width - chart_right} ${y}`} stroke="var(--color-border)" stroke-width="1" vector-effect="non-scaling-stroke" stroke-dasharray={y === chart_height - chart_bottom ? undefined : '3 5'} />
+            {/each}
             <path d={area_path} fill="url(#statistics-area)" />
             <path d={line_path} fill="none" stroke="var(--color-brand-400)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />
             {#each chart_points as point, index (point.period)}
-              <circle cx={point.x} cy={point.y} r="2.2" fill="var(--color-card)" stroke="var(--color-brand-400)" stroke-width="1.3" tabindex="0" role="button" aria-label={`${readable_period(point.period)}: ${format_bytes(point.saved_bytes)} saved`} onmouseenter={() => active_point = index} onfocus={() => active_point = index} />
+              {#if point.saved_bytes > 0}
+                <circle cx={point.x} cy={point.y} r="3.5" fill="var(--color-card)" stroke="var(--color-brand-400)" stroke-width="2" vector-effect="non-scaling-stroke" tabindex="0" role="button" aria-label={`${readable_period(point.period)}: ${format_bytes(point.saved_bytes)} saved`} onmouseenter={() => active_point = index} onfocus={() => active_point = index} />
+              {/if}
             {/each}
           </svg>
           {#if active_point !== null && trend[active_point]}
