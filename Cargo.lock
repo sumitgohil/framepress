@@ -4487,6 +4487,7 @@ dependencies = [
  "anyhow",
  "blake3",
  "bytes",
+ "chrono",
  "criterion",
  "dirs 5.0.1",
  "image",

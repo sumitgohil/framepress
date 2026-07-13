@@ -105,6 +105,47 @@ export type StatsSnapshot = {
   average_savings_pct: number;
 };
 
+export type AnalyticsRange = '7d' | '30d' | 'all';
+
+export type SavingsTrendPoint = {
+  period: string;
+  saved_bytes: number;
+  optimized_count: number;
+};
+
+export type StatsBreakdown = {
+  key: string;
+  saved_bytes: number;
+  optimized_count: number;
+};
+
+export type BiggestWin = {
+  input_path: string;
+  output_path: string | null;
+  output_exists: boolean;
+  thumbnail_path: string | null;
+  original_bytes: number;
+  optimized_bytes: number;
+  saved_bytes: number;
+  savings_pct: number;
+  format: string;
+  preset: string;
+  engine: string | null;
+  completed_at: number;
+};
+
+export type AnalyticsSnapshot = {
+  saved_bytes: number;
+  optimized_count: number;
+  input_bytes: number;
+  average_savings_pct: number;
+  savings_change_pct: number | null;
+  trend: SavingsTrendPoint[];
+  formats: StatsBreakdown[];
+  presets: StatsBreakdown[];
+  biggest_wins: BiggestWin[];
+};
+
 // ---------------------------------------------------------------------------
 // Tauri command surface
 // ---------------------------------------------------------------------------

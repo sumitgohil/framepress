@@ -16,3 +16,10 @@ pub async fn stats_snapshot_inner(
 ) -> Result<tinydrop_core::history::StatsSnapshot, String> {
     ctx.history().stats().map_err(|e| format!("{e}"))
 }
+
+pub async fn analytics_snapshot_inner(
+    range: tinydrop_core::history::AnalyticsRange,
+    ctx: State<'_, AppContext>,
+) -> Result<tinydrop_core::history::AnalyticsSnapshot, String> {
+    ctx.history().analytics(range).map_err(|e| format!("{e}"))
+}

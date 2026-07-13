@@ -65,6 +65,7 @@ pub fn run() {
             commands::queue_stats,
             commands::recent_history,
             commands::stats_snapshot,
+            commands::analytics_snapshot,
             commands::get_active_preset,
             commands::set_active_preset,
         ])

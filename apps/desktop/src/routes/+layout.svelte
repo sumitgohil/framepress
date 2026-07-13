@@ -4,6 +4,7 @@
   import { ModeWatcher } from 'mode-watcher';
   import { onMount } from 'svelte';
   import { queue } from '$lib/stores/queue.svelte';
+  import { statistics } from '$lib/stores/statistics.svelte';
 
   let { children } = $props();
   onMount(() => {
@@ -13,7 +14,11 @@
       window.matchMedia('(prefers-color-scheme: dark)').matches,
     );
     void queue.init();
-    return () => queue.dispose();
+    void statistics.init();
+    return () => {
+      queue.dispose();
+      statistics.dispose();
+    };
   });
 </script>
 

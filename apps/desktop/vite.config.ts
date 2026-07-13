@@ -8,6 +8,10 @@ const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  // Component tests render in jsdom and must resolve Svelte's browser build.
+  resolve: {
+    conditions: ['browser'],
+  },
   // Vite options tailored for Tauri development.
   clearScreen: false,
   server: {

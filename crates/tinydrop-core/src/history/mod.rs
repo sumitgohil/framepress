@@ -8,7 +8,10 @@ mod stats;
 
 pub use entry::{HistoryEntry, HistoryStatus};
 pub use sqlite::{SqliteHistory, SqliteHistoryConfig};
-pub use stats::{StatsAggregator, StatsSnapshot};
+pub use stats::{
+    AnalyticsRange, AnalyticsSnapshot, BiggestWin, SavingsTrendPoint, StatsAggregator,
+    StatsBreakdown, StatsSnapshot,
+};
 
 use std::str::FromStr;
 

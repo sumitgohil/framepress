@@ -110,6 +110,15 @@ pub async fn stats_snapshot(
     history::stats_snapshot_inner(ctx).await
 }
 
+/// Statistics page payload for the requested local time range.
+#[tauri::command]
+pub async fn analytics_snapshot(
+    range: tinydrop_core::history::AnalyticsRange,
+    ctx: State<'_, AppContext>,
+) -> Result<tinydrop_core::history::AnalyticsSnapshot, String> {
+    history::analytics_snapshot_inner(range, ctx).await
+}
+
 #[tauri::command]
 pub async fn get_active_preset(
     ctx: State<'_, AppContext>,

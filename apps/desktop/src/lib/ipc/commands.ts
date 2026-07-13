@@ -6,7 +6,15 @@
 
 import { invoke } from '@tauri-apps/api/core';
 
-import type { CompressionPreset, HistoryRow, ScoredCandidate, StatsSnapshot, WebpCopy } from './types';
+import type {
+  AnalyticsRange,
+  AnalyticsSnapshot,
+  CompressionPreset,
+  HistoryRow,
+  ScoredCandidate,
+  StatsSnapshot,
+  WebpCopy,
+} from './types';
 
 /** Liveness check. */
 export async function ping(): Promise<string> {
@@ -64,6 +72,11 @@ export async function recentHistory(limit: number): Promise<HistoryRow[]> {
 /** Fetch aggregate stats (today / total). */
 export async function statsSnapshot(): Promise<StatsSnapshot> {
   return invoke<StatsSnapshot>('stats_snapshot');
+}
+
+/** Fetch detailed, range-aware local analytics for the Statistics page. */
+export async function analyticsSnapshot(range: AnalyticsRange): Promise<AnalyticsSnapshot> {
+  return invoke<AnalyticsSnapshot>('analytics_snapshot', { range });
 }
 
 /**

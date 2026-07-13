@@ -49,6 +49,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 blake3 = "1"
 bytes = "1"
 tempfile = "3"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 
 # Testing
 proptest = "1"
