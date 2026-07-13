@@ -17,6 +17,7 @@ function create_queue_store() {
   let paused = $state(false);
   let initialised = $state(false);
   let unlisten: UnlistenFn | undefined;
+  let statusPoll: ReturnType<typeof setInterval> | undefined;
   let initialising: Promise<void> | undefined;
   /** Ids of items we've already announced via hero-moment toast. */
   let announced = new Set<string>();
@@ -78,6 +79,9 @@ function create_queue_store() {
         apply_update(event.payload);
       });
       await refresh();
+      // MCP jobs share the Rust queue but are submitted outside the Tauri
+      // event channel. Polling keeps those agent-created jobs visible.
+      statusPoll = setInterval(() => void refresh(), 2_000);
       initialised = true;
     })();
     try {
@@ -90,6 +94,8 @@ function create_queue_store() {
   function dispose() {
     unlisten?.();
     unlisten = undefined;
+    if (statusPoll) clearInterval(statusPoll);
+    statusPoll = undefined;
     initialised = false;
   }
 

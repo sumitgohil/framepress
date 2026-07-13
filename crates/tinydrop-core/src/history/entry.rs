@@ -59,6 +59,8 @@ pub struct HistoryEntry {
     pub engine: Option<String>,
     /// Active preset at the time of optimization.
     pub preset: String,
+    /// Origin of the work, such as `Desktop` or `Agent (MCP): Codex`.
+    pub source: String,
     /// Terminal status.
     pub status: HistoryStatus,
     /// Error message, if status != Completed.
@@ -88,6 +90,7 @@ impl From<&CompressionResult> for HistoryEntry {
             optimized_bytes: Some(r.optimized_bytes),
             engine: Some(r.engine.clone()),
             preset: "unknown".to_string(), // supplied by caller (preset is not on the result)
+            source: "Desktop".to_string(),
             status: HistoryStatus::Completed,
             error_message: None,
             started_at: 0,

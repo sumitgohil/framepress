@@ -141,6 +141,8 @@
         {/if}
         <span aria-hidden="true">·</span>
         <span>{preset_label}</span>
+        <span aria-hidden="true">·</span>
+        <span class={item.source.startsWith('Agent (MCP)') ? 'text-[var(--color-brand-400)]' : ''}>{item.source}</span>
         {#if item.original_bytes !== null}
           <span aria-hidden="true">·</span>
           <span class="font-mono tabular-nums">

@@ -71,6 +71,7 @@ export type QueueItem = {
   output_path: string | null;
   format: ImageFormat | null;
   preset: CompressionPreset;
+  source: string;
   status: QueueItemStatus;
   original_bytes: number | null;
   optimized_bytes: number | null;
@@ -102,6 +103,7 @@ export type HistoryRow = {
   optimized_bytes: number | null;
   engine: string | null;
   preset: CompressionPreset;
+  source: string;
   /** Serialized Rust `HistoryStatus` values use snake case. */
   status: 'completed' | 'failed' | 'cancelled';
   error_message: string | null;
@@ -161,6 +163,7 @@ export type AnalyticsSnapshot = {
   trend: SavingsTrendPoint[];
   formats: StatsBreakdown[];
   presets: StatsBreakdown[];
+  sources: StatsBreakdown[];
   biggest_wins: BiggestWin[];
 };
 

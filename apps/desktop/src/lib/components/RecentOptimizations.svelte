@@ -11,7 +11,9 @@
 
   let { rows }: Props = $props();
 
-  let visible = $derived(rows.slice(0, 3));
+  // Dashboard is the user's desktop workflow. Agent-originated work has
+  // dedicated visibility in Queue, History, and Statistics instead.
+  let visible = $derived(rows.filter((row) => row.source === 'Desktop').slice(0, 3));
 </script>
 
 <section class="space-y-3" aria-label="Recent optimizations">

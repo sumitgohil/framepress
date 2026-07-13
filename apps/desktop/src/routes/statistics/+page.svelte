@@ -158,6 +158,19 @@
         <div class="glass rounded-2xl p-5"><h2 class="font-semibold">Savings by preset</h2><p class="mt-1 text-sm text-[var(--color-muted-foreground)]">The presets delivering the most impact.</p><div class="mt-5 space-y-4">{#each analytics.presets as item (item.key)}<div><div class="flex justify-between gap-3 text-sm"><span class="truncate">{preset_label(item.key)}</span><span class="shrink-0 font-mono text-xs text-[var(--color-muted-foreground)]">{format_bytes(item.saved_bytes)} · {item.optimized_count}</span></div><div class="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--color-muted)]"><div class="h-full rounded-full bg-[var(--color-brand-400)] transition-[width] duration-500" style:width={`${analytics.saved_bytes ? Math.max(4, (item.saved_bytes / analytics.saved_bytes) * 100) : 0}%`}></div></div></div>{/each}</div></div>
       </section>
 
+      <section class="glass rounded-2xl p-5">
+        <h2 class="font-semibold">Usage by source</h2>
+        <p class="mt-1 text-sm text-[var(--color-muted-foreground)]">See what was optimized in TinyDrop versus through an agent using MCP.</p>
+        <div class="mt-5 space-y-4">
+          {#each analytics.sources as item (item.key)}
+            <div>
+              <div class="flex justify-between gap-3 text-sm"><span class={item.key.startsWith('Agent (MCP)') ? 'font-medium text-[var(--color-brand-400)]' : 'font-medium'}>{item.key}</span><span class="shrink-0 font-mono text-xs text-[var(--color-muted-foreground)]">{format_bytes(item.saved_bytes)} · {item.optimized_count} images</span></div>
+              <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--color-muted)]"><div class="h-full rounded-full bg-[var(--color-info)] transition-[width] duration-500" style:width={`${analytics.saved_bytes ? Math.max(4, (item.saved_bytes / analytics.saved_bytes) * 100) : 0}%`}></div></div>
+            </div>
+          {/each}
+        </div>
+      </section>
+
       <section class="glass rounded-2xl p-5"><div class="flex items-center justify-between gap-4"><div><h2 class="font-semibold">Biggest wins</h2><p class="mt-1 text-sm text-[var(--color-muted-foreground)]">Your largest individual reductions in this range.</p></div><a href="/history" class="text-sm font-medium text-[var(--color-brand-400)]">View History</a></div><div class="mt-4 divide-y divide-[var(--color-border)]">{#each analytics.biggest_wins as win (win.input_path + win.completed_at)}<div class="flex items-center gap-3 py-3"><div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"><ImagePreview paths={[win.thumbnail_path, win.output_path, win.input_path]} size={16} /></div><div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">{win.input_path.split('/').pop() ?? win.input_path}</p><p class="mt-0.5 text-xs text-[var(--color-muted-foreground)]">{win.format.toUpperCase()} · {preset_label(win.preset)}{#if win.engine} · {win.engine}{/if}</p></div><div class="text-right"><p class="text-sm font-semibold text-[var(--color-success)]">↓ {format_bytes(win.saved_bytes)}</p><p class="text-xs text-[var(--color-muted-foreground)]">{win.savings_pct.toFixed(0)}% smaller</p></div>{#if win.output_exists}<button type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]" onclick={() => reveal(win)} title="Show output in Finder" aria-label="Show {win.input_path.split('/').pop()} in Finder"><FolderOpen size={15} /></button>{/if}</div>{/each}</div></section>
     {/if}
   {/if}

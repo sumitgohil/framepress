@@ -38,6 +38,8 @@ pub struct QueueItem {
     pub format: Option<ImageFormat>,
     /// Active preset.
     pub preset: CompressionPreset,
+    /// Where this job came from, such as the desktop app or an MCP agent.
+    pub source: String,
     /// Current status.
     pub status: JobStatus,
     /// Original file size in bytes. `None` until the worker picks it up.
@@ -146,6 +148,7 @@ pub fn new_pending_item(
     input_path: PathBuf,
     format: Option<ImageFormat>,
     preset: CompressionPreset,
+    source: String,
 ) -> QueueItem {
     QueueItem {
         id,
@@ -153,6 +156,7 @@ pub fn new_pending_item(
         output_path: None,
         format,
         preset,
+        source,
         status: JobStatus::Pending,
         original_bytes: None,
         optimized_bytes: None,
@@ -194,6 +198,7 @@ mod tests {
             PathBuf::from("/tmp/in.png"),
             Some(ImageFormat::Png),
             CompressionPreset::Website,
+            "Desktop".to_string(),
         );
         assert_eq!(item.status, JobStatus::Pending);
         assert!(item.started_at.is_none());
@@ -209,12 +214,14 @@ mod tests {
             PathBuf::from("/tmp/Ads1.png"),
             Some(ImageFormat::Png),
             CompressionPreset::Website,
+            "Desktop".to_string(),
         ));
         state.push_pending(new_pending_item(
             "latest".to_string(),
             PathBuf::from("/tmp/Ads3.png"),
             Some(ImageFormat::Png),
             CompressionPreset::Website,
+            "Agent (MCP)".to_string(),
         ));
 
         let ids: Vec<_> = state.snapshot().into_iter().map(|item| item.id).collect();

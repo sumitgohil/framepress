@@ -96,6 +96,16 @@ impl QueueProcessor {
         input_path: PathBuf,
         preset: CompressionPreset,
     ) -> Result<String, CoreError> {
+        self.enqueue_with_source(input_path, preset, "Desktop".to_string())
+    }
+
+    /// Enqueue a file with visible provenance for Queue, History, and Stats.
+    pub fn enqueue_with_source(
+        &self,
+        input_path: PathBuf,
+        preset: CompressionPreset,
+        source: String,
+    ) -> Result<String, CoreError> {
         if !input_path.is_file() {
             return Err(CoreError::InputNotFound(input_path));
         }
@@ -107,7 +117,7 @@ impl QueueProcessor {
             return Err(CoreError::AlreadyOptimized(input_path));
         }
         let id = format!("job-{}", next_id_seq(&input_path));
-        let item = new_pending_item(id.clone(), input_path, None, preset);
+        let item = new_pending_item(id.clone(), input_path, None, preset, source);
         {
             let mut state = self.state.lock().expect("queue state poisoned");
             state.push_pending(item);
@@ -135,6 +145,7 @@ impl QueueProcessor {
             output_path: Some(result.output_path.clone()),
             format: Some(result.format),
             preset,
+            source: "Desktop".to_string(),
             status: JobStatus::Completed,
             original_bytes: Some(result.original_bytes),
             optimized_bytes: Some(result.optimized_bytes),
@@ -168,6 +179,7 @@ impl QueueProcessor {
                 optimized_bytes: Some(result.optimized_bytes),
                 engine: Some(result.engine),
                 preset: preset.label().to_string(),
+                source: item.source.clone(),
                 status: HistoryStatus::Completed,
                 error_message: None,
                 started_at: completed_at,
@@ -507,6 +519,7 @@ fn history_entry_from(item: &QueueItem) -> HistoryEntry {
         optimized_bytes: item.optimized_bytes,
         engine: item.engine.clone(),
         preset: item.preset.label().to_string(),
+        source: item.source.clone(),
         status,
         error_message: item.error_message.clone(),
         started_at: item.started_at.unwrap_or(0),

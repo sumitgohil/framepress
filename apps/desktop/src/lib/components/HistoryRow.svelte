@@ -65,6 +65,7 @@
       {#if row.engine}
         · {row.engine}
       {/if}
+      · <span class={row.source.startsWith('Agent (MCP)') ? 'text-[var(--color-brand-400)]' : ''}>{row.source}</span>
     </p>
   </div>
 

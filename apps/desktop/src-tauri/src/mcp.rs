@@ -264,10 +264,11 @@ impl AgentAccessManager {
             ));
         }
         let mut queue_ids = Vec::with_capacity(paths.len());
+        let source = agent_source(request.agent_name.as_deref());
         for path in &paths {
             queue_ids.push(
                 self.queue
-                    .enqueue(path.clone(), preset)
+                    .enqueue_with_source(path.clone(), preset, source.clone())
                     .map_err(|e| e.to_string())?,
             );
         }
@@ -455,6 +456,8 @@ struct SubmitOptimization {
     output_directory: Option<String>,
     naming: Option<String>,
     options: Option<OptimizationOptions>,
+    /// Optional display name saved with the job, for example `Codex`.
+    agent_name: Option<String>,
 }
 impl SubmitOptimization {
     fn for_retry(preset: CompressionPreset) -> Self {
@@ -476,7 +479,17 @@ impl SubmitOptimization {
             output_directory: None,
             naming: None,
             options: None,
+            agent_name: None,
         }
+    }
+}
+
+fn agent_source(agent_name: Option<&str>) -> String {
+    let name = agent_name.unwrap_or_default().trim();
+    if name.is_empty() {
+        "Agent (MCP)".to_string()
+    } else {
+        format!("Agent (MCP): {}", name.chars().take(64).collect::<String>())
     }
 }
 #[derive(Debug, Clone, Deserialize, Serialize, schemars::JsonSchema)]

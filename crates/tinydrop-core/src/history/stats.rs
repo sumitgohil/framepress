@@ -91,6 +91,7 @@ pub struct AnalyticsSnapshot {
     pub trend: Vec<SavingsTrendPoint>,
     pub formats: Vec<StatsBreakdown>,
     pub presets: Vec<StatsBreakdown>,
+    pub sources: Vec<StatsBreakdown>,
     pub biggest_wins: Vec<BiggestWin>,
 }
 

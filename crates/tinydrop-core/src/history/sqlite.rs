@@ -67,6 +67,7 @@ impl SqliteHistory {
                 optimized_bytes INTEGER,
                 engine TEXT,
                 preset TEXT NOT NULL,
+                source TEXT NOT NULL DEFAULT 'Desktop',
                 status TEXT NOT NULL,
                 error_message TEXT,
                 started_at INTEGER NOT NULL,
@@ -79,7 +80,19 @@ impl SqliteHistory {
             CREATE INDEX IF NOT EXISTS idx_history_status ON history(status);
             CREATE INDEX IF NOT EXISTS idx_history_status_completed_at ON history(status, completed_at);",
         )?;
-        conn.execute_batch("PRAGMA user_version = 1;")?;
+        let has_source = conn
+            .prepare("PRAGMA table_info(history)")?
+            .query_map([], |row| row.get::<_, String>(1))?
+            .collect::<Result<Vec<_>, _>>()?
+            .iter()
+            .any(|column| column == "source");
+        if !has_source {
+            conn.execute(
+                "ALTER TABLE history ADD COLUMN source TEXT NOT NULL DEFAULT 'Desktop'",
+                [],
+            )?;
+        }
+        conn.execute_batch("PRAGMA user_version = 2;")?;
         Ok(())
     }
 
@@ -89,9 +102,9 @@ impl SqliteHistory {
         conn.execute(
             "INSERT INTO history (
                 input_path, output_path, format, original_bytes, optimized_bytes,
-                engine, preset, status, error_message, started_at, completed_at,
+                engine, preset, source, status, error_message, started_at, completed_at,
                 thumbnail_path, dssim, margin_pct
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
             params![
                 entry.input_path,
                 entry.output_path,
@@ -100,6 +113,7 @@ impl SqliteHistory {
                 entry.optimized_bytes.map(|v| v as i64),
                 entry.engine,
                 entry.preset,
+                entry.source,
                 entry.status.as_str(),
                 entry.error_message,
                 entry.started_at,
@@ -118,7 +132,7 @@ impl SqliteHistory {
         let mut stmt = conn.prepare(
             "SELECT id, input_path, output_path, format, original_bytes, optimized_bytes,
                     engine, preset, status, error_message, started_at, completed_at,
-                    thumbnail_path, dssim, margin_pct
+                    thumbnail_path, dssim, margin_pct, source
              FROM history ORDER BY completed_at DESC, id DESC LIMIT ?1",
         )?;
         let rows = stmt.query_map(params![limit as i64], |row| {
@@ -139,6 +153,7 @@ impl SqliteHistory {
                 thumbnail_path: row.get(12)?,
                 dssim: row.get(13)?,
                 margin_pct: row.get(14)?,
+                source: row.get(15)?,
             })
         })?;
         let mut entries = Vec::new();
@@ -230,6 +245,7 @@ impl SqliteHistory {
         // original PNG/JPEG source.
         let formats = build_breakdown(&entries, source_format);
         let presets = build_breakdown(&entries, |entry| entry.preset.clone());
+        let sources = build_breakdown(&entries, |entry| entry.source.clone());
         let biggest_wins = build_biggest_wins(entries);
 
         Ok(AnalyticsSnapshot {
@@ -241,6 +257,7 @@ impl SqliteHistory {
             trend,
             formats,
             presets,
+            sources,
             biggest_wins,
         })
     }
@@ -267,7 +284,7 @@ fn completed_entries_between(
     let mut stmt = conn.prepare(
         "SELECT id, input_path, output_path, format, original_bytes, optimized_bytes,
                 engine, preset, status, error_message, started_at, completed_at,
-                thumbnail_path, dssim, margin_pct
+                thumbnail_path, dssim, margin_pct, source
          FROM history
          WHERE status = 'Completed'
            AND (?1 IS NULL OR completed_at >= ?1)
@@ -290,6 +307,7 @@ fn completed_entries_between(
             thumbnail_path: row.get(12)?,
             dssim: row.get(13)?,
             margin_pct: row.get(14)?,
+            source: row.get(15)?,
         })
     })?;
     rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
@@ -493,6 +511,13 @@ impl HistoryRepository for SqliteHistory {
             })
             .collect())
     }
+
+    fn record_via_entry(&self, entry: &HistoryEntry) -> anyhow::Result<i64> {
+        // Preserve queue metadata such as the original source path, preset,
+        // MCP provenance, timing, and quality details. The trait default
+        // rebuilds a CompressionResult and would lose those fields.
+        self.insert(entry)
+    }
 }
 
 #[cfg(test)]
@@ -516,6 +541,7 @@ mod tests {
             optimized_bytes: Some(optimized_bytes),
             engine: Some("test".to_string()),
             preset: preset.to_string(),
+            source: "Desktop".to_string(),
             status: HistoryStatus::Completed,
             error_message: None,
             started_at: completed_at - 20,
@@ -551,6 +577,7 @@ mod tests {
             optimized_bytes: Some(500),
             engine: Some("oxipng".to_string()),
             preset: "website".to_string(),
+            source: "Desktop".to_string(),
             status: HistoryStatus::Completed,
             error_message: None,
             started_at: 1_000_000,
@@ -565,6 +592,31 @@ mod tests {
         assert_eq!(recent.len(), 1);
         assert_eq!(recent[0].input_path, "/tmp/a.png");
         assert_eq!(recent[0].optimized_bytes, Some(500));
+    }
+
+    #[test]
+    fn record_via_entry_preserves_mcp_provenance() {
+        let store = SqliteHistory::open(SqliteHistoryConfig {
+            path: PathBuf::from(":memory:"),
+        })
+        .unwrap();
+        let entry = history_entry(
+            "/tmp/from-agent.png",
+            "PNG",
+            "maximum_compression",
+            1_000,
+            400,
+            Local::now().timestamp_millis(),
+        );
+        let entry = HistoryEntry {
+            source: "Agent (MCP): Codex".to_string(),
+            ..entry
+        };
+
+        HistoryRepository::record_via_entry(&store, &entry).unwrap();
+        let recent = store.recent(1).unwrap();
+        assert_eq!(recent[0].input_path, "/tmp/from-agent.png");
+        assert_eq!(recent[0].source, "Agent (MCP): Codex");
     }
 
     #[test]
