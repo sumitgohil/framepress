@@ -124,14 +124,14 @@ impl AtomicStats {
 /// `Arc<Mutex<...>>`; the UI snapshots it for rendering.
 #[derive(Debug, Default)]
 pub struct QueueState {
-    /// All known items, in enqueue order.
+    /// All known items, in enqueue order. Worker selection uses this order.
     pub(crate) items: Vec<QueueItem>,
 }
 
 impl QueueState {
-    /// Snapshot of the current items, cloned for serialization.
+    /// Snapshot of the current items for the UI, with the newest submission first.
     pub fn snapshot(&self) -> Vec<QueueItem> {
-        self.items.clone()
+        self.items.iter().rev().cloned().collect()
     }
 
     /// Append a new pending item.
@@ -199,6 +199,26 @@ mod tests {
         assert!(item.started_at.is_none());
         assert!(item.completed_at.is_none());
         assert!(item.output_path.is_none());
+    }
+
+    #[test]
+    fn snapshot_shows_the_most_recent_submission_first() {
+        let mut state = QueueState::default();
+        state.push_pending(new_pending_item(
+            "first".to_string(),
+            PathBuf::from("/tmp/Ads1.png"),
+            Some(ImageFormat::Png),
+            CompressionPreset::Website,
+        ));
+        state.push_pending(new_pending_item(
+            "latest".to_string(),
+            PathBuf::from("/tmp/Ads3.png"),
+            Some(ImageFormat::Png),
+            CompressionPreset::Website,
+        ));
+
+        let ids: Vec<_> = state.snapshot().into_iter().map(|item| item.id).collect();
+        assert_eq!(ids, ["latest", "first"]);
     }
 
     #[test]

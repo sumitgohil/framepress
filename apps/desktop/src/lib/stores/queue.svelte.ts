@@ -41,7 +41,9 @@ function create_queue_store() {
   function apply_update(item: QueueItem) {
     const idx = items.findIndex((i) => i.id === item.id);
     if (idx === -1) {
-      items = [...items, item];
+      // New submissions belong at the top. Existing entries retain their
+      // position when progress events update them.
+      items = [item, ...items];
     } else {
       items = items.map((existing, i) => (i === idx ? item : existing));
     }
