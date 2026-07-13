@@ -1,6 +1,6 @@
 //! AppContext — the manual DI container for the desktop shell.
 //!
-//! Wraps the `tinydrop-core` [`AdaptiveOptimizer`] and (in later branches)
+//! Wraps the `framepress-core` [`AdaptiveOptimizer`] and (in later branches)
 //! the queue processor, history repository, and settings store. Held in
 //! `tauri::State<AppContext>` and fetched by every command.
 
@@ -10,7 +10,7 @@ use anyhow::Context as _;
 use tokio::sync::Mutex;
 use tracing::info;
 
-use tinydrop_core::{
+use framepress_core::{
     default_registry,
     history::{HistoryRepository, SqliteHistory, SqliteHistoryConfig},
     AdaptiveOptimizer, CompressionPreset, ImageFormat, QueueItem, QueueProcessor, QueueStats,
@@ -54,7 +54,7 @@ impl AppContext {
         ));
         info!(
             engines = optimizer.engines().len(),
-            "TinyDrop context initialized",
+            "FramePress context initialized",
         );
         Ok(Self {
             optimizer,
@@ -112,7 +112,7 @@ impl AppContext {
 
     /// Detect an image's format from a file path.
     pub fn detect_format(&self, path: &std::path::Path) -> anyhow::Result<ImageFormat> {
-        Ok(tinydrop_core::optimizer::detect_format(path)?)
+        Ok(framepress_core::optimizer::detect_format(path)?)
     }
 
     /// Snapshot the current queue items.

@@ -1,27 +1,27 @@
 /**
  * Shared IPC types — single source of truth for command payloads and event
- * names. These mirror the Rust types in `tinydrop-core` plus the Tauri
+ * names. These mirror the Rust types in `framepress-core` plus the Tauri
  * command surface in `apps/desktop/src-tauri`.
  */
 
 // ---------------------------------------------------------------------------
-// Domain types (mirror `crates/tinydrop-core/src/domain/*.rs`)
+// Domain types (mirror `crates/framepress-core/src/domain/*.rs`)
 // ---------------------------------------------------------------------------
 
 export const PRESET_KEYS = [
-  'lossless',
-  'maximum_compression',
-  'developer_assets',
-  'website',
-  'email',
-  'social_media',
+  "lossless",
+  "maximum_compression",
+  "developer_assets",
+  "website",
+  "email",
+  "social_media",
 ] as const;
 export type CompressionPreset = (typeof PRESET_KEYS)[number];
 
-export const FORMAT_KEYS = ['png', 'jpeg', 'webp', 'gif', 'svg'] as const;
+export const FORMAT_KEYS = ["png", "jpeg", "webp", "gif", "svg"] as const;
 export type ImageFormat = (typeof FORMAT_KEYS)[number];
 
-export type EngineName = 'oxipng' | 'mozjpeg' | 'webp' | 'passthrough';
+export type EngineName = "oxipng" | "mozjpeg" | "webp" | "passthrough";
 
 export type ScoredCandidate = {
   engine: EngineName | string;
@@ -63,7 +63,8 @@ export type McpServerStatus = {
 // Queue types (Branch 5)
 // ---------------------------------------------------------------------------
 
-export type QueueItemStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type QueueItemStatus =
+  "pending" | "running" | "completed" | "failed" | "cancelled";
 
 export type QueueItem = {
   id: string;
@@ -105,7 +106,7 @@ export type HistoryRow = {
   preset: CompressionPreset;
   source: string;
   /** Serialized Rust `HistoryStatus` values use snake case. */
-  status: 'completed' | 'failed' | 'cancelled';
+  status: "completed" | "failed" | "cancelled";
   error_message: string | null;
   started_at: number;
   completed_at: number | null;
@@ -125,7 +126,7 @@ export type StatsSnapshot = {
   average_savings_pct: number;
 };
 
-export type AnalyticsRange = '7d' | '30d' | 'all';
+export type AnalyticsRange = "7d" | "30d" | "all";
 
 export type SavingsTrendPoint = {
   period: string;

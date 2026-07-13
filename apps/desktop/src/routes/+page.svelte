@@ -44,7 +44,7 @@
 </script>
 
 <svelte:head>
-  <title>Dashboard · TinyDrop</title>
+  <title>Dashboard · FramePress</title>
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-5xl flex-col gap-7 px-8 py-10 lg:px-10">

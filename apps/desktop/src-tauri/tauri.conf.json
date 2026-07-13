@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "TinyDrop",
+  "productName": "FramePress",
   "version": "0.1.0",
-  "identifier": "app.tinydrop.desktop",
+  "identifier": "app.framepress.desktop",
   "build": {
     "frontendDist": "../build",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "TinyDrop",
+        "title": "FramePress",
         "width": 1080,
         "height": 720,
         "minWidth": 880,
@@ -39,7 +39,7 @@
     "targets": ["app", "dmg"],
     "category": "DeveloperTool",
     "shortDescription": "Adaptive desktop image optimizer",
-    "longDescription": "TinyDrop runs multiple compression engines against each image in parallel and picks the smallest output that still passes a perceptual quality gate.",
+    "longDescription": "FramePress runs multiple compression engines against each image in parallel and picks the smallest output that still passes a perceptual quality gate.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

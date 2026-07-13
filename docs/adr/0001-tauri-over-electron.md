@@ -4,7 +4,7 @@
 
 ## Context
 
-TinyDrop is a desktop image optimizer for macOS. It needs a desktop shell that hosts a SvelteKit frontend and a Rust backend. The two viable options in 2026 are Tauri v2 (Rust core + system webview) and Electron (Node.js + Chromium).
+FramePress is a local-first macOS image optimizer with a SvelteKit frontend, a Rust optimization core, and optional loopback MCP access. It needs a desktop shell that keeps the app compact, integrates naturally with Rust services, and supports a clear local-only privacy boundary. The two primary options are Tauri v2 (Rust core + system webview) and Electron (Node.js + Chromium).
 
 ## Decision
 
@@ -12,18 +12,16 @@ We use **Tauri v2**.
 
 ## Rationale
 
-| Concern              | Tauri v2                             | Electron                          |
-|----------------------|---------------------------------------|-----------------------------------|
-| Binary size          | ~10 MB                                | ~150 MB (Chromium runtime)        |
-| Memory at idle       | ~30 MB                                | ~150 MB                           |
-| Cold start           | <500 ms                               | ~1.5 s                            |
-| Native feel          | System webview (WKWebView on macOS)   | Chromium — close but not identical|
-| Backend language     | Rust, same as `tinydrop-core`         | Need a Rust↔Node bridge          |
-| Permissions model    | Capability files (scoped, explicit)   | nodeIntegration flags (legacy)    |
-| macOS-specific APIs  | Easy via Cargo crates                  | Need NAPI or context bridge       |
-| Auto-update          | Built-in plugin                       | electron-updater (separate)       |
+| Concern             | Tauri v2                            | Electron                           |
+| ------------------- | ----------------------------------- | ---------------------------------- |
+| Runtime model       | System webview + Rust               | Bundled Chromium + Node.js         |
+| Native feel         | System webview (WKWebView on macOS) | Chromium — close but not identical |
+| Backend language    | Rust, same as `framepress-core`     | Need a Rust↔Node bridge            |
+| Permissions model   | Capability files (scoped, explicit) | nodeIntegration flags (legacy)     |
+| macOS-specific APIs | Easy via Cargo crates               | Need NAPI or context bridge        |
+| Auto-update         | Built-in plugin                     | electron-updater (separate)        |
 
-For TinyDrop's profile — a single macOS-first app with a Rust core, premium UI, and an explicit "no telemetry, no upload" promise — Tauri's smaller footprint, native webview, and Rust-native backend are decisive wins.
+For FramePress's profile — a macOS-first app with a Rust core, local-only processing, and an optional local MCP service — Tauri's system webview and Rust-native backend are decisive wins. Exact binary size, memory use, and startup time are build- and machine-dependent, so they are measured rather than assumed when performance targets are introduced.
 
 ## Consequences
 

@@ -18,7 +18,7 @@
 </script>
 
 <svelte:head>
-  <title>Queue · TinyDrop</title>
+  <title>Queue · FramePress</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-3xl flex-col gap-6 px-8 py-10">

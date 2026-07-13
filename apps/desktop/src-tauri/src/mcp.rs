@@ -1,4 +1,4 @@
-//! Local, authenticated MCP agent access for TinyDrop.
+//! Local, authenticated MCP agent access for FramePress.
 //!
 //! The service is deliberately bound to loopback only. It shares the desktop
 //! queue rather than creating a second compression pipeline, so work submitted
@@ -34,7 +34,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 
-use tinydrop_core::{
+use framepress_core::{
     history::{AnalyticsRange, SqliteHistory},
     AdaptiveOptimizer, CompressionPreset, ImageFormat, JobStatus, QueueItem, QueueProcessor,
 };
@@ -104,7 +104,7 @@ impl AgentAccessManager {
     ) -> Self {
         let config_path = dirs::data_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("tinydrop")
+            .join("framepress")
             .join("mcp-settings.json");
         let config = std::fs::read(&config_path)
             .ok()
@@ -191,15 +191,15 @@ impl AgentAccessManager {
             .map_err(|e| format!("Could not bind the local MCP endpoint: {e}"))?;
         let cancel = CancellationToken::new();
         *self.cancellation.lock().await = Some(cancel.clone());
-        let service: StreamableHttpService<TinyDropMcp, LocalSessionManager> =
+        let service: StreamableHttpService<FramePressMcp, LocalSessionManager> =
             StreamableHttpService::new(
                 {
                     let manager = self.clone();
-                    move || Ok(TinyDropMcp::new(manager.clone()))
+                    move || Ok(FramePressMcp::new(manager.clone()))
                 },
                 Default::default(),
                 StreamableHttpServerConfig {
-                    // TinyDrop only serves independent request/response tool
+                    // FramePress only serves independent request/response tool
                     // calls. Keeping MCP's in-memory stream sessions would
                     // make a client-held session ID invalid after an app
                     // restart, despite its bearer token still being valid.
@@ -214,7 +214,7 @@ impl AgentAccessManager {
             manager: self.clone(),
         };
         let app = Router::new()
-            .route("/health", get(|| async { "TinyDrop MCP is running" }))
+            .route("/health", get(|| async { "FramePress MCP is running" }))
             .nest_service("/mcp", service)
             .layer(middleware::from_fn_with_state(auth, require_token));
         tokio::spawn(async move {
@@ -380,7 +380,7 @@ impl AgentAccessManager {
         let mut queue_ids = Vec::new();
         let mut failures = Vec::new();
         for input in paths {
-            let format = tinydrop_core::optimizer::detect_format(&input)
+            let format = framepress_core::optimizer::detect_format(&input)
                 .map_err(|error| error.to_string())?;
             if !matches!(format, ImageFormat::Png | ImageFormat::Jpeg) {
                 failures.push(serde_json::json!({"input_path":input,"error":"WebP copies require PNG or JPEG input."}));
@@ -524,26 +524,28 @@ struct StatisticsArgs {
     range: Option<String>,
 }
 #[derive(Clone)]
-struct TinyDropMcp {
+struct FramePressMcp {
     manager: AgentAccessManager,
-    tool_router: ToolRouter<TinyDropMcp>,
+    tool_router: ToolRouter<FramePressMcp>,
 }
 
 #[tool_router]
-impl TinyDropMcp {
+impl FramePressMcp {
     fn new(manager: AgentAccessManager) -> Self {
         Self {
             manager,
             tool_router: Self::tool_router(),
         }
     }
-    #[tool(description = "Discover TinyDrop capabilities, formats, limits, and access policy.")]
+    #[tool(description = "Discover FramePress capabilities, formats, limits, and access policy.")]
     async fn get_agent_capabilities(&self) -> String {
         json_text(
-            serde_json::json!({"name":"TinyDrop MCP","version":env!("CARGO_PKG_VERSION"),"inputs":"local filesystem paths only","tools":TOOL_NAMES,"policy":self.manager.config().await}),
+            serde_json::json!({"name":"FramePress MCP","version":env!("CARGO_PKG_VERSION"),"inputs":"local filesystem paths only","tools":TOOL_NAMES,"policy":self.manager.config().await}),
         )
     }
-    #[tool(description = "List TinyDrop compression presets and their effective default settings.")]
+    #[tool(
+        description = "List FramePress compression presets and their effective default settings."
+    )]
     async fn get_presets(&self) -> String {
         json_text(serde_json::json!(CompressionPreset::ALL.iter().map(|preset| serde_json::json!({"id":preset,"label":preset.label(),"description":preset.description()})).collect::<Vec<_>>()))
     }
@@ -573,7 +575,7 @@ impl TinyDropMcp {
             Err(error) => json_text(serde_json::json!({"error":error})),
         }
     }
-    #[tool(description = "Get aggregate and per-file status for a TinyDrop MCP job.")]
+    #[tool(description = "Get aggregate and per-file status for a FramePress MCP job.")]
     async fn get_job_status(&self, Parameters(JobId { job_id }): Parameters<JobId>) -> String {
         result_text(self.manager.job_status(&job_id).await)
     }
@@ -613,7 +615,7 @@ impl TinyDropMcp {
             .into_iter()
             .find(|row| row.input_path == path)))
     }
-    #[tool(description = "Read recent local TinyDrop history.")]
+    #[tool(description = "Read recent local FramePress history.")]
     async fn get_history(
         &self,
         Parameters(HistoryArgs { limit }): Parameters<HistoryArgs>,
@@ -624,7 +626,7 @@ impl TinyDropMcp {
             .recent(limit.unwrap_or(100).min(500))
             .unwrap_or_default()))
     }
-    #[tool(description = "Read local TinyDrop analytics for 7d, 30d, or all time.")]
+    #[tool(description = "Read local FramePress analytics for 7d, 30d, or all time.")]
     async fn get_statistics(
         &self,
         Parameters(StatisticsArgs { range }): Parameters<StatisticsArgs>,
@@ -642,20 +644,20 @@ impl TinyDropMcp {
     #[tool(description = "Reveal a completed output in the operating system file manager.")]
     async fn reveal_output(&self, Parameters(PathArg { path }): Parameters<PathArg>) -> String {
         json_text(
-            serde_json::json!({"error":"Reveal is available from the TinyDrop desktop UI; agent calls return output paths for safe explicit handling.","path":path}),
+            serde_json::json!({"error":"Reveal is available from the FramePress desktop UI; agent calls return output paths for safe explicit handling.","path":path}),
         )
     }
-    #[tool(description = "Show approved roots and TinyDrop's file safety policy.")]
+    #[tool(description = "Show approved roots and FramePress's file safety policy.")]
     async fn get_access_policy(&self) -> String {
         json_text(serde_json::json!(self.manager.config().await))
     }
-    #[tool(description = "Request that the TinyDrop desktop user approves a new directory root.")]
+    #[tool(description = "Request that the FramePress desktop user approves a new directory root.")]
     async fn request_directory_access(
         &self,
         Parameters(PathArg { path }): Parameters<PathArg>,
     ) -> String {
         json_text(
-            serde_json::json!({"status":"pending_user_approval","path":path,"message":"Approve this folder in TinyDrop Settings > Agent Access."}),
+            serde_json::json!({"status":"pending_user_approval","path":path,"message":"Approve this folder in FramePress Settings > Agent Access."}),
         )
     }
     #[tool(
@@ -672,7 +674,7 @@ impl TinyDropMcp {
 }
 
 #[tool_handler]
-impl ServerHandler for TinyDropMcp {}
+impl ServerHandler for FramePressMcp {}
 
 const TOOL_NAMES: &[&str] = &[
     "get_agent_capabilities",
@@ -746,7 +748,7 @@ fn webp_copy_output_path(input: &Path) -> PathBuf {
     input
         .parent()
         .unwrap_or_else(|| Path::new("."))
-        .join(format!("{stem}-tinydrop.webp"))
+        .join(format!("{stem}-framepress.webp"))
 }
 fn allowed(path: &Path, roots: &[String]) -> bool {
     roots
@@ -761,7 +763,7 @@ fn expand_paths(
 ) -> Result<Vec<PathBuf>, String> {
     if roots.is_empty() {
         return Err(
-            "No approved folders. Add a folder in TinyDrop Settings > Agent Access first.".into(),
+            "No approved folders. Add a folder in FramePress Settings > Agent Access first.".into(),
         );
     }
     let mut pending = inputs.iter().map(PathBuf::from).collect::<Vec<_>>();
@@ -772,7 +774,7 @@ fn expand_paths(
             .map_err(|e| format!("Could not access {}: {e}", path.display()))?;
         if !allowed(&canonical, roots) {
             return Err(format!(
-                "{} is outside TinyDrop's approved folders.",
+                "{} is outside FramePress's approved folders.",
                 canonical.display()
             ));
         }
@@ -792,7 +794,7 @@ fn expand_paths(
             && !canonical
                 .file_stem()
                 .and_then(|stem| stem.to_str())
-                .is_some_and(|stem| stem.ends_with("-tinydrop"))
+                .is_some_and(|stem| stem.ends_with("-framepress"))
         {
             found.insert(canonical);
         }

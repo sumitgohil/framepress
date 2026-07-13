@@ -1,11 +1,11 @@
 [package]
-name = "tinydrop-desktop"
+name = "framepress-desktop"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "TinyDrop desktop app — Tauri v2 shell"
-default-run = "tinydrop-desktop"
+description = "FramePress desktop app — Tauri v2 shell"
+default-run = "framepress-desktop"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -14,7 +14,7 @@ unsafe_code = "forbid"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tinydrop-core = { path = "../../../crates/tinydrop-core" }
+framepress-core = { path = "../../../crates/framepress-core" }
 
 tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
 tauri-plugin-dialog = "2"

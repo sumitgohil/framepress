@@ -1,42 +1,90 @@
-# TinyDrop Architecture
+# FramePress architecture
 
-TinyDrop keeps the UI, application wiring, and image-processing code separate so compression logic stays testable and portable.
+FramePress is a local-first desktop image optimizer. Its architecture keeps the Svelte user experience, Tauri integration, MCP access, and Rust optimization engine separate, so the performance-sensitive work stays testable and reusable.
 
-## Layout
+## Goals
 
-```text
-apps/desktop/          Tauri shell and Svelte user interface
-crates/tinydrop-core/  optimizer, queue, history, presets, and engines
-docs/adr/              concise records of key technical decisions
-SampleImages/          image fixtures used by integration tests
-```
+- Keep image data on the user's machine.
+- Make safe optimization the default: preserve originals and avoid marginal savings.
+- Give desktop users and trusted MCP clients one consistent queue and audit trail.
+- Keep application wiring explicit and the optimization core portable.
 
-## Runtime flow
+## Workspace layout
 
 ```text
-Svelte UI → Tauri command → QueueProcessor → AdaptiveOptimizer → image engine
+apps/desktop/          SvelteKit interface and Tauri v2 desktop shell
+crates/framepress-core/  domain model, presets, optimizer, queue, engines, history
+crates/framepress-cli/   reserved workspace crate for future command-line use
+crates/framepress-api/   reserved workspace crate for future programmatic use
+docs/adr/              architectural decision records
+docs/mcp.md            MCP setup, safety model, and tool reference
 ```
 
-The queue owns background work and exposes snapshots for the UI. CPU-heavy encoding runs outside the async command path. The optimizer runs compatible encoders, checks visual distance, and keeps the smallest result that meets the selected preset's budget.
+## System overview
+
+```text
+Svelte desktop UI ─┐
+                   ├── Tauri commands / local MCP server ── QueueProcessor
+MCP client ────────┘                                      │
+                                                          ▼
+                                                  AdaptiveOptimizer
+                                                          │
+                                                          ▼
+                                        OxiPNG · MozJPEG · WebP encoder
+                                                          │
+                                                          ▼
+                                            sibling output + SQLite history
+```
+
+The desktop UI and the MCP server are two entry points to the same local application services. This prevents separate optimization behavior, avoids parallel histories, and makes agent-submitted work visible in Queue, History, and Statistics.
 
 ## Components
 
-- `AdaptiveOptimizer` resolves a preset and scores candidate outputs.
-- `CompressionEngine` is the common interface for OxiPNG, MozJPEG, and WebP.
-- `QueueProcessor` tracks pending, running, completed, failed, and cancelled jobs.
-- `SqliteHistory` records completed work and aggregates local statistics.
-- `AppContext` wires shared application services into Tauri commands.
+| Component           | Responsibility                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| SvelteKit UI        | File and folder drop, preset selection, queue controls, history, statistics, and MCP settings. |
+| Tauri commands      | Thin typed bridge between the UI and application services.                                     |
+| `AppContext`        | Explicitly wires shared optimizer, queue, history, settings, and MCP services.                 |
+| `QueueProcessor`    | Owns pending and active work, cancellation, pause/resume state, and queue snapshots.           |
+| `AdaptiveOptimizer` | Resolves the preset, runs compatible encoders, evaluates candidates, and selects a result.     |
+| `CompressionEngine` | Common engine contract implemented by OxiPNG, MozJPEG, and WebP paths.                         |
+| `SqliteHistory`     | Persists completed work and provides local statistics and analytics.                           |
+| MCP server          | Opt-in, authenticated loopback endpoint for trusted agents.                                    |
 
-## File handling
+## Optimization policy
 
-TinyDrop receives paths only from explicit file selection or a native drag-and-drop action. Outputs are written beside the source with a `-tinydrop` suffix. A generated sidecar cannot be queued as a new source image.
+1. FramePress detects the source format and resolves the selected preset.
+2. The optimizer runs compatible encoding candidates.
+3. Lossy candidates are compared with the original using a luminance-weighted YCbCr visual-distance score.
+4. FramePress chooses the smallest candidate that remains within the preset's visual-distance budget.
+5. A lossy result must save at least 5%; otherwise the original is retained.
 
-## Quality and size policy
+Supported re-encoding formats are PNG, JPEG, and WebP. GIF and SVG are recognized by the intake layer but are not re-encoded in the current implementation.
 
-Each preset defines encoder quality, effort, and a visual-distance budget. Lossy results must save at least 5%; otherwise TinyDrop keeps the original. This prevents marginal or negative savings.
+## File and privacy boundaries
 
-## Decisions
+- Desktop paths come only from explicit file selection or native drag-and-drop.
+- Folder traversal is performed in the desktop process; symbolic links are skipped to avoid cycles.
+- Outputs are sibling files with a `-framepress` suffix, so originals remain intact.
+- Generated outputs are excluded from subsequent queue intake.
+- All history and analytics are stored locally.
 
-- [Tauri over Electron](docs/adr/0001-tauri-over-electron.md)
-- [Manual application context](docs/adr/0002-trait-objects-over-di-framework.md)
-- [YCbCr visual-distance check](docs/adr/0003-dssim-over-butteraugli-for-v1.md)
+## MCP boundary
+
+MCP is deliberately an opt-in local integration, not a remote service:
+
+- The server listens only on `127.0.0.1`.
+- Every request must present the configured bearer token.
+- An agent can submit images only beneath user-approved directory roots.
+- Batch size is configured by the desktop user; standard optimization preserves the source format.
+- Agents cannot alter global safety settings or approve a directory themselves.
+- MCP work enters the same queue and is recorded with an agent source in local history.
+
+See [docs/mcp.md](docs/mcp.md) for the connection flow and tool reference.
+
+## Key decisions
+
+- [ADR-0001: Tauri v2 over Electron](docs/adr/0001-tauri-over-electron.md)
+- [ADR-0002: Trait objects and manual `AppContext`](docs/adr/0002-trait-objects-over-di-framework.md)
+- [ADR-0003: YCbCr visual-distance check](docs/adr/0003-dssim-over-butteraugli-for-v1.md)
+- [ADR-0004: Opt-in loopback MCP access](docs/adr/0004-local-mcp-agent-access.md)

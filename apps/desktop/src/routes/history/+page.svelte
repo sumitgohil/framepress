@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-  <title>History · TinyDrop</title>
+  <title>History · FramePress</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-3xl flex-col gap-6 px-8 py-10">

@@ -10,8 +10,10 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 use tokio::task;
 
-use tinydrop_core::queue::QueueItem;
-use tinydrop_core::{optimizer::detect_format, AdaptiveOptimizer, CompressionPreset, ImageFormat};
+use framepress_core::queue::QueueItem;
+use framepress_core::{
+    optimizer::detect_format, AdaptiveOptimizer, CompressionPreset, ImageFormat,
+};
 
 use crate::context::AppContext;
 
@@ -74,7 +76,7 @@ fn expand_image_paths(paths: impl IntoIterator<Item = PathBuf>) -> Result<Vec<Pa
             && !path
                 .file_stem()
                 .and_then(|stem| stem.to_str())
-                .is_some_and(|stem| stem.ends_with("-tinydrop"))
+                .is_some_and(|stem| stem.ends_with("-framepress"))
         {
             images.insert(path);
         }
@@ -83,7 +85,7 @@ fn expand_image_paths(paths: impl IntoIterator<Item = PathBuf>) -> Result<Vec<Pa
     Ok(images.into_iter().collect())
 }
 
-/// Frontend-facing mirror of [`tinydrop_core::ScoredCandidate`].
+/// Frontend-facing mirror of [`framepress_core::ScoredCandidate`].
 #[derive(Debug, Clone, Serialize)]
 pub struct ScoredCandidateDto {
     pub engine: String,
@@ -97,8 +99,8 @@ pub struct ScoredCandidateDto {
     pub margin_pct_vs_runner_up: Option<f64>,
 }
 
-impl From<tinydrop_core::ScoredCandidate> for ScoredCandidateDto {
-    fn from(s: tinydrop_core::ScoredCandidate) -> Self {
+impl From<framepress_core::ScoredCandidate> for ScoredCandidateDto {
+    fn from(s: framepress_core::ScoredCandidate) -> Self {
         Self {
             engine: s.result.engine,
             output_path: s.result.output_path.to_string_lossy().to_string(),
@@ -158,7 +160,7 @@ mod tests {
         fs::write(&top_level, []).unwrap();
         fs::write(&nested_image, []).unwrap();
         fs::write(dir.path().join("notes.txt"), []).unwrap();
-        fs::write(nested.join("photo-tinydrop.webp"), []).unwrap();
+        fs::write(nested.join("photo-framepress.webp"), []).unwrap();
 
         let paths = expand_image_paths([dir.path().to_path_buf()]).unwrap();
 
@@ -180,7 +182,7 @@ mod tests {
     fn webp_copy_path_is_a_sibling_with_a_webp_extension() {
         assert_eq!(
             webp_copy_output_path(Path::new("/images/banner.png")),
-            Path::new("/images/banner-tinydrop.webp")
+            Path::new("/images/banner-framepress.webp")
         );
     }
 }
@@ -209,7 +211,7 @@ pub async fn queue_snapshot(ctx: &AppContext) -> Result<Vec<QueueItem>, String> 
 }
 
 /// Aggregate queue stats.
-pub async fn queue_stats(ctx: &AppContext) -> Result<tinydrop_core::queue::QueueStats, String> {
+pub async fn queue_stats(ctx: &AppContext) -> Result<framepress_core::queue::QueueStats, String> {
     Ok(ctx.queue_stats())
 }
 
@@ -289,7 +291,7 @@ fn webp_copy_output_path(input: &Path) -> PathBuf {
         .and_then(|stem| stem.to_str())
         .unwrap_or("image");
     let parent = input.parent().unwrap_or_else(|| Path::new("."));
-    parent.join(format!("{stem}-tinydrop.webp"))
+    parent.join(format!("{stem}-framepress.webp"))
 }
 
 #[allow(dead_code)]
@@ -309,7 +311,7 @@ fn run_one(
 fn spawn_queue_poller(
     app: AppHandle,
     job_id: String,
-    queue: std::sync::Arc<tinydrop_core::QueueProcessor>,
+    queue: std::sync::Arc<framepress_core::QueueProcessor>,
 ) {
     tokio::spawn(async move {
         let mut last = None;
@@ -328,7 +330,7 @@ fn spawn_queue_poller(
             }
 
             // Stop when the item reaches a terminal state.
-            use tinydrop_core::queue::JobStatus;
+            use framepress_core::queue::JobStatus;
             if matches!(
                 item.status,
                 JobStatus::Completed | JobStatus::Failed | JobStatus::Cancelled

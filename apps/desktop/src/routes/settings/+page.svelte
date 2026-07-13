@@ -56,7 +56,7 @@
   }
   async function copyConfig() {
     if (!agentConfig || !agentStatus) return;
-    const snippet = JSON.stringify({ mcpServers: { tinydrop: { url: agentStatus.endpoint, headers: { Authorization: `Bearer ${agentConfig.token}` } } } }, null, 2);
+    const snippet = JSON.stringify({ mcpServers: { framepress: { url: agentStatus.endpoint, headers: { Authorization: `Bearer ${agentConfig.token}` } } } }, null, 2);
     await navigator.clipboard.writeText(snippet); copied = true; setTimeout(() => copied = false, 1600);
   }
   async function testConnection() {
@@ -66,14 +66,14 @@
 </script>
 
 <svelte:head>
-  <title>Settings · TinyDrop</title>
+  <title>Settings · FramePress</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-2xl flex-col gap-8 px-8 py-10">
   <header class="space-y-1">
     <h1 class="text-2xl font-semibold tracking-tight">Settings</h1>
     <p class="text-sm text-[var(--color-muted-foreground)]">
-      Personalize TinyDrop. Changes save automatically.
+      Personalize FramePress. Changes save automatically.
     </p>
   </header>
 
@@ -132,7 +132,7 @@
     <div class="flex items-start justify-between gap-4">
       <div>
         <h2 class="flex items-center gap-2 text-sm font-semibold tracking-tight"><Server size={15} /> Agent Access (MCP)</h2>
-        <p class="mt-1 text-xs text-[var(--color-muted-foreground)]">Let trusted local agents optimize files through TinyDrop. Files never leave this computer.</p>
+        <p class="mt-1 text-xs text-[var(--color-muted-foreground)]">Let trusted local agents optimize files through FramePress. Files never leave this computer.</p>
       </div>
       <button type="button" role="switch" aria-label="Expose local MCP server" aria-checked={agentConfig?.enabled ?? false} onclick={() => toggleAgentAccess(!(agentConfig?.enabled ?? false))} class="relative h-6 w-11 shrink-0 rounded-full transition-colors" class:bg-[var(--color-brand-500)]={agentConfig?.enabled} class:bg-[var(--color-muted)]={!agentConfig?.enabled}>
         <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform" class:left-0.5={!agentConfig?.enabled} class:left-5={agentConfig?.enabled}></span>

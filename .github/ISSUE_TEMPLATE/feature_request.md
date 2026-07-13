@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new TinyDrop feature
+about: Suggest a new FramePress feature
 title: "[feature] "
 labels: ["enhancement"]
 ---

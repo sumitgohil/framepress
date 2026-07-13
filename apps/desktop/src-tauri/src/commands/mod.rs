@@ -59,14 +59,14 @@ pub async fn resume_queue(ctx: State<'_, AppContext>) -> Result<(), String> {
 #[tauri::command]
 pub async fn queue_snapshot(
     ctx: State<'_, AppContext>,
-) -> Result<Vec<tinydrop_core::queue::QueueItem>, String> {
+) -> Result<Vec<framepress_core::queue::QueueItem>, String> {
     optimize::queue_snapshot(&ctx).await
 }
 
 #[tauri::command]
 pub async fn queue_stats(
     ctx: State<'_, AppContext>,
-) -> Result<tinydrop_core::queue::QueueStats, String> {
+) -> Result<framepress_core::queue::QueueStats, String> {
     optimize::queue_stats(&ctx).await
 }
 
@@ -82,7 +82,7 @@ pub async fn optimize_one(
 #[tauri::command]
 pub async fn export_webp_copy(
     input_path: String,
-    preset: tinydrop_core::CompressionPreset,
+    preset: framepress_core::CompressionPreset,
     app: tauri::AppHandle,
     ctx: State<'_, AppContext>,
 ) -> Result<optimize::WebpCopyDto, String> {
@@ -99,38 +99,38 @@ pub fn existing_webp_copy(input_path: String) -> Option<optimize::WebpCopyDto> {
 pub async fn recent_history(
     limit: u32,
     ctx: State<'_, AppContext>,
-) -> Result<Vec<tinydrop_core::history::HistoryEntry>, String> {
+) -> Result<Vec<framepress_core::history::HistoryEntry>, String> {
     history::recent_history_inner(limit, ctx).await
 }
 
 #[tauri::command]
 pub async fn stats_snapshot(
     ctx: State<'_, AppContext>,
-) -> Result<tinydrop_core::history::StatsSnapshot, String> {
+) -> Result<framepress_core::history::StatsSnapshot, String> {
     history::stats_snapshot_inner(ctx).await
 }
 
 /// Statistics page payload for the requested local time range.
 #[tauri::command]
 pub async fn analytics_snapshot(
-    range: tinydrop_core::history::AnalyticsRange,
+    range: framepress_core::history::AnalyticsRange,
     ctx: State<'_, AppContext>,
-) -> Result<tinydrop_core::history::AnalyticsSnapshot, String> {
+) -> Result<framepress_core::history::AnalyticsSnapshot, String> {
     history::analytics_snapshot_inner(range, ctx).await
 }
 
 #[tauri::command]
 pub async fn get_active_preset(
     ctx: State<'_, AppContext>,
-) -> Result<tinydrop_core::CompressionPreset, String> {
+) -> Result<framepress_core::CompressionPreset, String> {
     settings::get_active_preset_inner(ctx).await
 }
 
 #[tauri::command]
 pub async fn set_active_preset(
-    preset: tinydrop_core::CompressionPreset,
+    preset: framepress_core::CompressionPreset,
     ctx: State<'_, AppContext>,
-) -> Result<tinydrop_core::CompressionPreset, String> {
+) -> Result<framepress_core::CompressionPreset, String> {
     settings::set_active_preset_inner(preset, ctx).await
 }
 
@@ -142,7 +142,7 @@ pub async fn mcp_config(
     Ok(ctx.agent_access().config().await)
 }
 
-/// Enable or disable TinyDrop's loopback-only MCP endpoint.
+/// Enable or disable FramePress's loopback-only MCP endpoint.
 #[tauri::command]
 pub async fn set_mcp_enabled(
     enabled: bool,

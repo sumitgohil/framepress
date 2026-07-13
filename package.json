@@ -1,8 +1,8 @@
 {
-  "name": "tinydrop",
+  "name": "framepress",
   "version": "0.1.0",
   "private": true,
-  "description": "TinyDrop monorepo root",
+  "description": "FramePress monorepo root",
   "license": "MIT OR Apache-2.0",
   "engines": {
     "node": ">=20",

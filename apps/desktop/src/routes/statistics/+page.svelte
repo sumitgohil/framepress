@@ -88,14 +88,14 @@
   onMount(() => { void load(); });
 </script>
 
-<svelte:head><title>Statistics · TinyDrop</title></svelte:head>
+<svelte:head><title>Statistics · FramePress</title></svelte:head>
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8 lg:px-10">
   <header class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <p class="mb-1 text-sm font-medium text-[var(--color-brand-400)]">Your optimization impact</p>
       <h1 class="text-3xl font-semibold tracking-tight">Statistics</h1>
-      <p class="mt-1 text-sm text-[var(--color-muted-foreground)]">See where TinyDrop is making your images lighter.</p>
+      <p class="mt-1 text-sm text-[var(--color-muted-foreground)]">See where FramePress is making your images lighter.</p>
     </div>
     <div class="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] p-1" aria-label="Statistics period">
       {#each ranges as option (option.key)}
@@ -160,7 +160,7 @@
 
       <section class="glass rounded-2xl p-5">
         <h2 class="font-semibold">Usage by source</h2>
-        <p class="mt-1 text-sm text-[var(--color-muted-foreground)]">See what was optimized in TinyDrop versus through an agent using MCP.</p>
+        <p class="mt-1 text-sm text-[var(--color-muted-foreground)]">See what was optimized in FramePress versus through an agent using MCP.</p>
         <div class="mt-5 space-y-4">
           {#each analytics.sources as item (item.key)}
             <div>

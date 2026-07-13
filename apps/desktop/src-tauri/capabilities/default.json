@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Scoped capabilities for TinyDrop windows. Filesystem access is intentionally limited to user-selected paths via the dialog plugin; we do NOT request broad filesystem capabilities. See ARCHITECTURE.md.",
+  "description": "Scoped capabilities for FramePress windows. Filesystem access is intentionally limited to user-selected paths via the dialog plugin; we do NOT request broad filesystem capabilities. See ARCHITECTURE.md.",
   "windows": ["main", "widget"],
   "permissions": [
     "core:default",

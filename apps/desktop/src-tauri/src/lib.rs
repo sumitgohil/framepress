@@ -1,6 +1,6 @@
-//! TinyDrop desktop — Tauri v2 shell.
+//! FramePress desktop — Tauri v2 shell.
 //!
-//! All business logic lives in `tinydrop-core`. This crate wires the
+//! All business logic lives in `framepress-core`. This crate wires the
 //! [`AdaptiveOptimizer`] (and the queue/history/settings modules added in
 //! later branches) into Tauri commands that the Svelte frontend invokes
 //! through the typed IPC layer.
@@ -23,7 +23,7 @@ pub fn run() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("tinydrop=info,warn")),
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("framepress=info,warn")),
         )
         .with_target(false)
         .init();
@@ -96,15 +96,15 @@ fn show_main_window(app: &AppHandle) -> tauri::Result<()> {
 }
 
 fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
-    let open_main = MenuItem::with_id(app, "open-main", "Open TinyDrop", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit TinyDrop", true, None::<&str>)?;
+    let open_main = MenuItem::with_id(app, "open-main", "Open FramePress", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit FramePress", true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let menu = Menu::with_items(app, &[&open_main, &separator, &quit])?;
 
     let icon = app.default_window_icon().cloned();
     let mut tray = TrayIconBuilder::with_id("main")
         .menu(&menu)
-        .tooltip("TinyDrop")
+        .tooltip("FramePress")
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "open-main" => {

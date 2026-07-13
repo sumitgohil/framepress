@@ -1415,6 +1415,66 @@ dependencies = [
 ]
 
 [[package]]
+name = "framepress-api"
+version = "0.1.0"
+
+[[package]]
+name = "framepress-cli"
+version = "0.1.0"
+
+[[package]]
+name = "framepress-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "bytes",
+ "chrono",
+ "criterion",
+ "dirs 5.0.1",
+ "image",
+ "imagequant",
+ "mozjpeg",
+ "oxipng",
+ "png 0.17.16",
+ "proptest",
+ "rayon",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "webp",
+]
+
+[[package]]
+name = "framepress-desktop"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "dirs 5.0.1",
+ "framepress-core",
+ "rand 0.8.7",
+ "rmcp",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4722,66 +4782,6 @@ checksum = "c431b87111666e491a90baa837f914fb45cd5dc3c268591b0220ff5057f2085f"
 dependencies = [
  "num-conv",
  "time-core",
-]
-
-[[package]]
-name = "tinydrop-api"
-version = "0.1.0"
-
-[[package]]
-name = "tinydrop-cli"
-version = "0.1.0"
-
-[[package]]
-name = "tinydrop-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "blake3",
- "bytes",
- "chrono",
- "criterion",
- "dirs 5.0.1",
- "image",
- "imagequant",
- "mozjpeg",
- "oxipng",
- "png 0.17.16",
- "proptest",
- "rayon",
- "rusqlite",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "webp",
-]
-
-[[package]]
-name = "tinydrop-desktop"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "dirs 5.0.1",
- "rand 0.8.7",
- "rmcp",
- "schemars 1.2.1",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "tempfile",
- "thiserror 2.0.18",
- "tinydrop-core",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

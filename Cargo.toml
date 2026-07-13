@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/tinydrop-core",
-    "crates/tinydrop-cli",
-    "crates/tinydrop-api",
+    "crates/framepress-core",
+    "crates/framepress-cli",
+    "crates/framepress-api",
     "apps/desktop/src-tauri",
 ]
 
@@ -12,8 +12,8 @@ version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
 rust-version = "1.75"
-authors = ["TinyDrop contributors"]
-repository = "https://github.com/tinydrop/tinydrop"
+authors = ["FramePress contributors"]
+repository = "https://github.com/framepress/framepress"
 
 [workspace.dependencies]
 # Core image & format deps

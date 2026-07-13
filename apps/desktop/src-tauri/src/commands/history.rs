@@ -7,19 +7,19 @@ use crate::context::AppContext;
 pub async fn recent_history_inner(
     limit: u32,
     ctx: State<'_, AppContext>,
-) -> Result<Vec<tinydrop_core::history::HistoryEntry>, String> {
+) -> Result<Vec<framepress_core::history::HistoryEntry>, String> {
     ctx.history().recent(limit).map_err(|e| format!("{e}"))
 }
 
 pub async fn stats_snapshot_inner(
     ctx: State<'_, AppContext>,
-) -> Result<tinydrop_core::history::StatsSnapshot, String> {
+) -> Result<framepress_core::history::StatsSnapshot, String> {
     ctx.history().stats().map_err(|e| format!("{e}"))
 }
 
 pub async fn analytics_snapshot_inner(
-    range: tinydrop_core::history::AnalyticsRange,
+    range: framepress_core::history::AnalyticsRange,
     ctx: State<'_, AppContext>,
-) -> Result<tinydrop_core::history::AnalyticsSnapshot, String> {
+) -> Result<framepress_core::history::AnalyticsSnapshot, String> {
     ctx.history().analytics(range).map_err(|e| format!("{e}"))
 }

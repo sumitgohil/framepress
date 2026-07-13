@@ -43,7 +43,7 @@
     >
       <Droplet size={22} fill="currentColor" />
     </div>
-    <span class="text-xl font-semibold tracking-tight">TinyDrop</span>
+    <span class="text-xl font-semibold tracking-tight">FramePress</span>
   </div>
 
   <!-- Nav -->

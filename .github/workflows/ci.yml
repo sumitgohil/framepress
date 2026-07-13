@@ -84,13 +84,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: svelte-kit sync
-        run: pnpm --filter @tinydrop/desktop exec svelte-kit sync
+        run: pnpm --filter @framepress/desktop exec svelte-kit sync
 
       - name: svelte-check (typecheck)
-        run: pnpm --filter @tinydrop/desktop exec svelte-check --tsconfig ./tsconfig.json --threshold error
+        run: pnpm --filter @framepress/desktop exec svelte-check --tsconfig ./tsconfig.json --threshold error
 
       - name: Frontend test (vitest)
-        run: pnpm --filter @tinydrop/desktop test -- --run
+        run: pnpm --filter @framepress/desktop test -- --run
         continue-on-error: false
 
       - name: Prettier check

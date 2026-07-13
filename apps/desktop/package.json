@@ -1,9 +1,9 @@
 {
-  "name": "@tinydrop/desktop",
+  "name": "@framepress/desktop",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "TinyDrop desktop app — Tauri v2 + SvelteKit shell",
+  "description": "FramePress desktop app — Tauri v2 + SvelteKit shell",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
