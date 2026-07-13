@@ -6,12 +6,11 @@ import { defineConfig } from 'vitest/config';
 // See https://v2.tauri.app/start/frontend/vite/
 const host = process.env.TAURI_DEV_HOST;
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [tailwindcss(), sveltekit()],
-  // Component tests render in jsdom and must resolve Svelte's browser build.
-  resolve: {
-    conditions: ['browser'],
-  },
+  // Component tests render in jsdom and need Svelte's browser build. Keeping
+  // this test-only preserves SvelteKit's server build during dev/SSR.
+  resolve: mode === 'test' ? { conditions: ['browser'] } : undefined,
   // Vite options tailored for Tauri development.
   clearScreen: false,
   server: {
@@ -42,4 +41,4 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,ts}'],
     setupFiles: ['./src/test-setup.ts'],
   },
-});
+}));
