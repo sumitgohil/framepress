@@ -2,6 +2,8 @@
 //! progress events; Branch 4's synchronous version is preserved for the
 //! one-shot path used by tests and the early integration layer.
 
+use std::collections::BTreeSet;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -28,6 +30,50 @@ pub struct OptimizeOneArgs {
     pub input_path: String,
     pub preset: CompressionPreset,
     pub output_path: String,
+}
+
+/// Expand dropped files and folders into a stable, de-duplicated image list.
+///
+/// Folder traversal intentionally happens in the desktop process rather than
+/// the frontend: native drag-and-drop supplies filesystem paths directly, and
+/// this keeps file picking and dropping on the same path. Symlinked
+/// directories are skipped to prevent directory cycles.
+fn expand_image_paths(paths: impl IntoIterator<Item = PathBuf>) -> Result<Vec<PathBuf>, String> {
+    let mut pending: Vec<PathBuf> = paths.into_iter().collect();
+    let mut images = BTreeSet::new();
+
+    while let Some(path) = pending.pop() {
+        let metadata = fs::symlink_metadata(&path)
+            .map_err(|error| format!("Could not access {}: {error}", path.display()))?;
+
+        if metadata.file_type().is_symlink() {
+            continue;
+        }
+
+        if metadata.is_dir() {
+            let entries = fs::read_dir(&path)
+                .map_err(|error| format!("Could not read folder {}: {error}", path.display()))?;
+            for entry in entries {
+                let entry = entry.map_err(|error| {
+                    format!("Could not read an item in {}: {error}", path.display())
+                })?;
+                pending.push(entry.path());
+            }
+            continue;
+        }
+
+        if metadata.is_file()
+            && ImageFormat::from_path(&path).is_some()
+            && !path
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .is_some_and(|stem| stem.ends_with("-tinydrop"))
+        {
+            images.insert(path);
+        }
+    }
+
+    Ok(images.into_iter().collect())
 }
 
 /// Frontend-facing mirror of [`tinydrop_core::ScoredCandidate`].
@@ -72,15 +118,55 @@ pub async fn optimize_paths(
     let preset = args.preset;
     let queue = ctx.queue();
 
-    let mut ids = Vec::with_capacity(args.paths.len());
-    for raw in args.paths {
-        let path = PathBuf::from(raw);
+    let paths = expand_image_paths(args.paths.into_iter().map(PathBuf::from))?;
+    if paths.is_empty() {
+        return Err("No supported images were found in the selected files or folders.".to_string());
+    }
+
+    let mut ids = Vec::with_capacity(paths.len());
+    for path in paths {
         let id = queue.enqueue(path, preset).map_err(|e| format!("{e}"))?;
         spawn_queue_poller(app.clone(), id.clone(), queue.clone());
         ids.push(id);
     }
 
     Ok(ids)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use super::expand_image_paths;
+
+    #[test]
+    fn expands_nested_folders_and_skips_unsupported_or_generated_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let nested = dir.path().join("nested");
+        fs::create_dir(&nested).unwrap();
+
+        let top_level = dir.path().join("cover.PNG");
+        let nested_image = nested.join("photo.jpeg");
+        fs::write(&top_level, []).unwrap();
+        fs::write(&nested_image, []).unwrap();
+        fs::write(dir.path().join("notes.txt"), []).unwrap();
+        fs::write(nested.join("photo-tinydrop.webp"), []).unwrap();
+
+        let paths = expand_image_paths([dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(paths, vec![top_level, nested_image]);
+    }
+
+    #[test]
+    fn de_duplicates_files_selected_directly_and_through_a_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        let image = dir.path().join("cover.png");
+        fs::write(&image, []).unwrap();
+
+        let paths = expand_image_paths([dir.path().to_path_buf(), image.clone()]).unwrap();
+
+        assert_eq!(paths, vec![image]);
+    }
 }
 
 /// Cancel a queued or running job.

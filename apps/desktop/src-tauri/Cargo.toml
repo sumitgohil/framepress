@@ -29,6 +29,9 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 
+[dev-dependencies]
+tempfile = { workspace = true }
+
 [features]
 # Tauri features: keep the default set for Phase 1.
 default = []

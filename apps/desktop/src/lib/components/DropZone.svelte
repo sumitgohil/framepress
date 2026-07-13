@@ -51,6 +51,17 @@
     onfiles(paths);
   }
 
+  async function pick_folder(event: MouseEvent) {
+    event.stopPropagation();
+    const selected = await openDialog({
+      directory: true,
+      multiple: false,
+      title: 'Select a folder of images to optimize',
+    });
+    if (!selected) return;
+    onfiles([selected]);
+  }
+
   function handle_key(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -59,8 +70,9 @@
   }
 </script>
 
-<button
-  type="button"
+<div
+  role="button"
+  tabindex="0"
   class={cn(
     'group relative flex w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed text-center transition-all duration-200 ease-out',
     compact ? 'px-5 py-8' : 'min-h-[15.25rem] px-8 py-12',
@@ -130,7 +142,15 @@
     </span>
   </p>
 
+  <button
+    type="button"
+    class="relative z-10 text-xs font-medium text-[var(--color-brand-500)] underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+    onclick={pick_folder}
+  >
+    choose a folder
+  </button>
+
   {#if hint}
     <p class="mt-1 text-xs text-[var(--color-muted-foreground)]">{hint}</p>
   {/if}
-</button>
+</div>
