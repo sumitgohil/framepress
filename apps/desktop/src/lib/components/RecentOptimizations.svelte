@@ -2,11 +2,11 @@
   import { CheckCircle2, CircleDashed, Image, XCircle } from 'lucide-svelte';
 
   import ImagePreview from '$lib/components/ImagePreview.svelte';
-  import type { HistoryRow } from '$lib/ipc/types';
+  import type { ActivityRow } from '$lib/ipc/types';
   import { format_bytes, format_relative } from '$lib/utils/format';
 
   type Props = {
-    rows: HistoryRow[];
+    rows: ActivityRow[];
   };
 
   let { rows }: Props = $props();
@@ -14,11 +14,20 @@
   // Dashboard is the user's desktop workflow. Agent-originated work has
   // dedicated visibility in Queue, History, and Statistics instead.
   let visible = $derived(rows.filter((row) => row.source === 'Desktop').slice(0, 3));
+
+  // Pending queue items may not have a known format or timestamp yet — fall
+  // back to the preset name and the present moment so the row still renders.
+  let format_label = $derived((row: ActivityRow) =>
+    row.format ? row.format.toUpperCase() : row.preset.toUpperCase(),
+  );
+  let activity_time = $derived((row: ActivityRow) =>
+    row.completed_at ?? row.started_at ?? Date.now(),
+  );
 </script>
 
-<section class="space-y-3" aria-label="Recent optimizations">
+<section class="space-y-3" aria-label="Recent activity">
   <div class="flex items-center justify-between">
-    <h2 class="text-sm font-semibold tracking-tight">Recent Optimizations</h2>
+    <h2 class="text-sm font-semibold tracking-tight">Recent Activity</h2>
     <a
       href="/history"
       class="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
@@ -37,12 +46,12 @@
   {:else}
     <ul class="glass overflow-hidden rounded-xl divide-y divide-[var(--color-border)]">
       {#each visible as row (row.id)}
-        {@const savings = row.original_bytes > 0 && row.optimized_bytes !== null
+        {@const savings = row.original_bytes !== null && row.original_bytes > 0 && row.optimized_bytes !== null
           ? Math.max(0, Math.round(((row.original_bytes - row.optimized_bytes) / row.original_bytes) * 100))
           : null}
-        {@const saved_bytes = row.optimized_bytes === null
-          ? null
-          : Math.max(0, row.original_bytes - row.optimized_bytes)}
+        {@const saved_bytes = row.original_bytes !== null && row.optimized_bytes !== null
+          ? Math.max(0, row.original_bytes - row.optimized_bytes)
+          : null}
         <li>
           <article class="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-x-5 px-4 py-3.5 sm:px-5">
             <div class="flex min-w-0 items-center gap-3.5">
@@ -57,7 +66,7 @@
                   {row.input_path.split('/').pop() ?? row.input_path}
                 </p>
                 <p class="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
-                  {row.format.toUpperCase()} · {row.engine ?? row.preset}
+                  {format_label(row)} · {row.engine ?? row.preset}
                 </p>
               </div>
             </div>
@@ -75,7 +84,7 @@
             </div>
 
             <div class="flex min-w-20 items-center justify-end gap-3 text-xs text-[var(--color-muted-foreground)]">
-              <span class="hidden md:inline">{format_relative(row.completed_at ?? row.started_at)}</span>
+              <span class="hidden md:inline">{format_relative(activity_time(row))}</span>
               {#if row.status === 'completed'}
                 <CheckCircle2 size={19} strokeWidth={2.25} class="text-[var(--color-success)]" />
               {:else if row.status === 'failed'}

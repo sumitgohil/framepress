@@ -7,13 +7,19 @@
   import { mcpConfig, mcpStatus, rotateMcpToken, setMcpEnabled, updateMcpConfig } from '$lib/ipc/commands';
   import type { CompressionPreset, McpConfig, McpServerStatus } from '$lib/ipc/types';
   import { PRESET_KEYS } from '$lib/ipc/types';
+  import {
+    DEFAULT_MCP_CLIENT_ID,
+    MCP_CLIENT_GROUPS,
+    get_mcp_client,
+    type McpClientId,
+  } from '$lib/utils/mcp-clients';
 
   let preset: CompressionPreset = $derived(settings.value.default_preset);
   let agentConfig = $state<McpConfig | null>(null);
   let agentStatus = $state<McpServerStatus | null>(null);
   let rootInput = $state('');
   let copied = $state(false);
-  let mcpClient = $state<'opencode' | 'compatible'>('opencode');
+  let mcpClient = $state<McpClientId>(DEFAULT_MCP_CLIENT_ID);
   let connectionMessage = $state<string | null>(null);
   let agentError = $state<string | null>(null);
   let unlistenMcp: UnlistenFn | undefined;
@@ -74,11 +80,12 @@
   }
   async function copyConfig() {
     if (!agentConfig || !agentStatus) return;
-    const connection = { url: agentStatus.endpoint, headers: { Authorization: `Bearer ${agentConfig.token}` } };
-    const snippet = mcpClient === 'opencode'
-      ? JSON.stringify({ $schema: 'https://opencode.ai/config.json', mcp: { framepress: { type: 'remote', enabled: true, ...connection } } }, null, 2)
-      : JSON.stringify({ mcpServers: { framepress: connection } }, null, 2);
-    await navigator.clipboard.writeText(snippet); copied = true; setTimeout(() => copied = false, 1600);
+    const client = get_mcp_client(mcpClient);
+    if (!client) return;
+    const snippet = client.snippet({ url: agentStatus.endpoint, token: agentConfig.token });
+    await navigator.clipboard.writeText(snippet);
+    copied = true;
+    setTimeout(() => copied = false, 1600);
   }
   async function testConnection() {
     try { const status = await mcpStatus(); connectionMessage = status.running ? `Connected to ${status.endpoint}` : 'MCP server is not running.'; }
@@ -161,6 +168,7 @@
     </div>
 
     {#if agentConfig}
+      {@const active_client = get_mcp_client(mcpClient)}
       <div class="mt-4 space-y-4 border-t border-[var(--color-border)] pt-4">
         <div class="flex items-center justify-between rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs">
           <span class="text-[var(--color-muted-foreground)]">{agentStatus?.running ? 'Running locally' : 'Disabled'}</span>
@@ -169,16 +177,24 @@
         <div class="flex flex-wrap gap-2">
           <label class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2 text-xs text-[var(--color-muted-foreground)]">For
             <select bind:value={mcpClient} aria-label="MCP client configuration format" class="bg-transparent text-[var(--color-foreground)] outline-none">
-              <option value="opencode">OpenCode</option>
-              <option value="compatible">Other compatible client</option>
+              {#each MCP_CLIENT_GROUPS as group (group.group)}
+                <optgroup label={group.group}>
+                  {#each group.ids as id (id)}
+                    {@const client = get_mcp_client(id)}
+                    {#if client}<option value={client.id}>{client.label}</option>{/if}
+                  {/each}
+                </optgroup>
+              {/each}
             </select>
           </label>
-          <button type="button" onclick={copyConfig} disabled={!agentStatus?.running} class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--color-brand-500)] px-3 text-xs font-medium text-white disabled:opacity-50"><Copy size={13} /> {copied ? 'Copied configuration' : `Copy ${mcpClient === 'opencode' ? 'OpenCode' : 'MCP'} configuration`}</button>
+          <button type="button" onclick={copyConfig} disabled={!agentStatus?.running} class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--color-brand-500)] px-3 text-xs font-medium text-white disabled:opacity-50"><Copy size={13} /> {copied ? 'Copied configuration' : `Copy ${active_client?.label ?? 'MCP'} configuration`}</button>
           <button type="button" onclick={async () => { agentConfig = await rotateMcpToken(); agentStatus = await mcpStatus(); }} class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-muted)]"><RefreshCw size={13} /> Rotate token</button>
           <button type="button" onclick={testConnection} class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-muted)]"><CheckCircle2 size={13} /> Test connection</button>
         </div>
         {#if connectionMessage}<p class="text-xs text-[var(--color-muted-foreground)]">{connectionMessage}</p>{/if}
-        <p class="text-xs text-[var(--color-muted-foreground)]">Choose your client before copying. The OpenCode option registers FramePress as native MCP tools; the compatible format is for clients that use <code>mcpServers</code>.</p>
+        <p class="text-xs text-[var(--color-muted-foreground)]">
+          Pick the client you want to paste into, then copy. {#if active_client}Current target: <code class="font-mono">{active_client.location}</code> (<span class="uppercase">{active_client.format}</span>).{/if}
+        </p>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label class="text-xs font-medium">Port<input type="number" min="1" max="65535" value={agentConfig.port} oninput={(event) => saveAgentConfig({ ...agentConfig!, port: Number((event.target as HTMLInputElement).value) })} class="mt-1 block h-9 w-full rounded-lg border border-[var(--color-border)] bg-transparent px-2 font-mono text-xs outline-none" /></label>
           <label class="text-xs font-medium">Maximum batch<input type="number" min="1" max="500" value={agentConfig.max_batch_size} oninput={(event) => saveAgentConfig({ ...agentConfig!, max_batch_size: Number((event.target as HTMLInputElement).value) })} class="mt-1 block h-9 w-full rounded-lg border border-[var(--color-border)] bg-transparent px-2 font-mono text-xs outline-none" /></label>

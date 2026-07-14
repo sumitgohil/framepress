@@ -66,6 +66,33 @@ export type McpServerStatus = {
 export type QueueItemStatus =
   "pending" | "running" | "completed" | "failed" | "cancelled";
 
+/**
+ * Unified shape rendered by "Recent Activity" tiles. Both the active queue
+ * (pending/running) and terminal history rows project into this so a single
+ * component can render in-flight and completed work side-by-side.
+ *
+ * Field semantics follow the looser of the two source types:
+ * - `format` may be `null` while a queue item hasn't been parsed yet.
+ * - `original_bytes` may be `null` until the optimizer has measured the file.
+ * - `thumbnail_path` is `null` for queue items (no thumbnail exists yet).
+ * - `id` is namespaced upstream so queue/history rows never collide.
+ */
+export type ActivityRow = {
+  id: string | number;
+  input_path: string;
+  output_path: string | null;
+  format: ImageFormat | null;
+  original_bytes: number | null;
+  optimized_bytes: number | null;
+  engine: string | null;
+  preset: CompressionPreset;
+  source: string;
+  status: QueueItemStatus;
+  started_at: number | null;
+  completed_at: number | null;
+  thumbnail_path: string | null;
+};
+
 export type QueueItem = {
   id: string;
   input_path: string;
