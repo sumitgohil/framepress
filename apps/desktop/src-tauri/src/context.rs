@@ -7,6 +7,7 @@
 use std::sync::Arc;
 
 use anyhow::Context as _;
+use tauri::AppHandle;
 use tokio::sync::Mutex;
 use tracing::info;
 
@@ -37,7 +38,7 @@ pub struct AppContext {
 
 impl AppContext {
     /// Construct a new context. Wires the default engine registry.
-    pub fn build() -> anyhow::Result<Self> {
+    pub fn build(app_handle: AppHandle) -> anyhow::Result<Self> {
         // Presets own their visual-quality budgets. Do not apply the old
         // global default gate here: it is stricter than Email and rejects the
         // lossy WebP candidate that the preset intentionally allows.
@@ -51,6 +52,7 @@ impl AppContext {
             queue.clone(),
             history.clone(),
             optimizer.clone(),
+            app_handle,
         ));
         info!(
             engines = optimizer.engines().len(),

@@ -31,6 +31,7 @@ use rmcp::{
     ServerHandler,
 };
 use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Emitter};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 
@@ -89,6 +90,7 @@ pub struct AgentAccessManager {
     queue: Arc<QueueProcessor>,
     history: Arc<SqliteHistory>,
     optimizer: Arc<AdaptiveOptimizer>,
+    app_handle: AppHandle,
     config: Arc<Mutex<AgentAccessConfig>>,
     batches: Arc<Mutex<HashMap<String, BatchJob>>>,
     cancellation: Arc<Mutex<Option<CancellationToken>>>,
@@ -101,6 +103,7 @@ impl AgentAccessManager {
         queue: Arc<QueueProcessor>,
         history: Arc<SqliteHistory>,
         optimizer: Arc<AdaptiveOptimizer>,
+        app_handle: AppHandle,
     ) -> Self {
         let config_path = dirs::data_dir()
             .unwrap_or_else(|| PathBuf::from("."))
@@ -114,6 +117,7 @@ impl AgentAccessManager {
             queue,
             history,
             optimizer,
+            app_handle,
             config: Arc::new(Mutex::new(config)),
             batches: Arc::new(Mutex::new(HashMap::new())),
             cancellation: Arc::new(Mutex::new(None)),
@@ -143,6 +147,12 @@ impl AgentAccessManager {
             error: self.last_error.lock().await.clone(),
         }
     }
+    async fn broadcast_status(&self) {
+        let snapshot = self.status().await;
+        if let Err(error) = self.app_handle.emit("mcp:status_changed", &snapshot) {
+            tracing::warn!(%error, "could not broadcast MCP status change");
+        }
+    }
     pub async fn update_config(
         &self,
         mut next: AgentAccessConfig,
@@ -154,6 +164,7 @@ impl AgentAccessManager {
         next.approved_roots.dedup();
         self.persist(&next)?;
         *self.config.lock().await = next.clone();
+        self.broadcast_status().await;
         Ok(next)
     }
     pub async fn rotate_token(&self) -> Result<AgentAccessConfig, String> {
@@ -170,12 +181,15 @@ impl AgentAccessManager {
         let mut next = self.config().await;
         next.enabled = enabled;
         self.update_config(next).await?;
-        if enabled {
-            self.start().await?;
+        let result = if enabled {
+            self.start().await
         } else {
             self.stop().await;
-        }
-        Ok(self.status().await)
+            Ok(())
+        };
+        let snapshot = self.status().await;
+        self.broadcast_status().await;
+        result.map(|_| snapshot)
     }
     pub async fn start(&self) -> Result<(), String> {
         if self.cancellation.lock().await.is_some() {
@@ -186,9 +200,16 @@ impl AgentAccessManager {
             return Ok(());
         }
         let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
-        let listener = tokio::net::TcpListener::bind(addr)
-            .await
-            .map_err(|e| format!("Could not bind the local MCP endpoint: {e}"))?;
+        let listener = tokio::net::TcpListener::bind(addr).await;
+        let listener = match listener {
+            Ok(l) => l,
+            Err(e) => {
+                let msg = format!("Could not bind the local MCP endpoint: {e}");
+                *self.last_error.lock().await = Some(msg.clone());
+                self.broadcast_status().await;
+                return Err(msg);
+            }
+        };
         let cancel = CancellationToken::new();
         *self.cancellation.lock().await = Some(cancel.clone());
         let service: StreamableHttpService<FramePressMcp, LocalSessionManager> =
@@ -222,12 +243,14 @@ impl AgentAccessManager {
                 .with_graceful_shutdown(cancel.cancelled_owned())
                 .await;
         });
+        self.broadcast_status().await;
         Ok(())
     }
     pub async fn stop(&self) {
         if let Some(cancel) = self.cancellation.lock().await.take() {
             cancel.cancel();
         }
+        self.broadcast_status().await;
     }
     async fn active_batch_count(&self) -> usize {
         self.batches

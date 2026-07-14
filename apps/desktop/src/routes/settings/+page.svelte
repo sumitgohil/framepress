@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { listen, type UnlistenFn } from '@tauri-apps/api/event';
   import { settings, PRESET_LABELS, PRESET_DESCRIPTIONS } from '$lib/stores/settings.svelte';
   import { theme } from '$lib/stores/theme.svelte';
   import { Sun, Moon, Monitor, Server, Copy, RefreshCw, Plus, X, CheckCircle2 } from 'lucide-svelte';
@@ -12,8 +13,10 @@
   let agentStatus = $state<McpServerStatus | null>(null);
   let rootInput = $state('');
   let copied = $state(false);
+  let mcpClient = $state<'opencode' | 'compatible'>('opencode');
   let connectionMessage = $state<string | null>(null);
   let agentError = $state<string | null>(null);
+  let unlistenMcp: UnlistenFn | undefined;
 
   async function refreshAgentStatus() {
     try {
@@ -26,6 +29,18 @@
 
   onMount(() => {
     void (async () => {
+      // Subscribe BEFORE the initial snapshot so a fast emit can't fall into the gap.
+      try {
+        unlistenMcp = await listen<McpServerStatus>('mcp:status_changed', (event) => {
+          agentStatus = event.payload;
+          if (agentConfig) {
+            agentConfig = { ...agentConfig, enabled: event.payload.enabled };
+          }
+        });
+      } catch (error) {
+        agentError = String(error);
+      }
+
       try {
         [agentConfig, agentStatus] = await Promise.all([mcpConfig(), mcpStatus()]);
         agentError = null;
@@ -35,7 +50,10 @@
     })();
 
     const statusPoll = window.setInterval(() => void refreshAgentStatus(), 2_000);
-    return () => window.clearInterval(statusPoll);
+    return () => {
+      window.clearInterval(statusPoll);
+      unlistenMcp?.();
+    };
   });
 
   function set_preset(value: CompressionPreset) {
@@ -56,7 +74,10 @@
   }
   async function copyConfig() {
     if (!agentConfig || !agentStatus) return;
-    const snippet = JSON.stringify({ mcpServers: { framepress: { url: agentStatus.endpoint, headers: { Authorization: `Bearer ${agentConfig.token}` } } } }, null, 2);
+    const connection = { url: agentStatus.endpoint, headers: { Authorization: `Bearer ${agentConfig.token}` } };
+    const snippet = mcpClient === 'opencode'
+      ? JSON.stringify({ $schema: 'https://opencode.ai/config.json', mcp: { framepress: { type: 'remote', enabled: true, ...connection } } }, null, 2)
+      : JSON.stringify({ mcpServers: { framepress: connection } }, null, 2);
     await navigator.clipboard.writeText(snippet); copied = true; setTimeout(() => copied = false, 1600);
   }
   async function testConnection() {
@@ -146,12 +167,18 @@
           <code class="font-mono text-[var(--color-foreground)]">{agentStatus?.endpoint ?? `http://127.0.0.1:${agentConfig.port}/mcp`}</code>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button type="button" onclick={copyConfig} disabled={!agentStatus?.running} class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--color-brand-500)] px-3 text-xs font-medium text-white disabled:opacity-50"><Copy size={13} /> {copied ? 'Copied configuration' : 'Copy MCP configuration'}</button>
+          <label class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2 text-xs text-[var(--color-muted-foreground)]">For
+            <select bind:value={mcpClient} aria-label="MCP client configuration format" class="bg-transparent text-[var(--color-foreground)] outline-none">
+              <option value="opencode">OpenCode</option>
+              <option value="compatible">Other compatible client</option>
+            </select>
+          </label>
+          <button type="button" onclick={copyConfig} disabled={!agentStatus?.running} class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--color-brand-500)] px-3 text-xs font-medium text-white disabled:opacity-50"><Copy size={13} /> {copied ? 'Copied configuration' : `Copy ${mcpClient === 'opencode' ? 'OpenCode' : 'MCP'} configuration`}</button>
           <button type="button" onclick={async () => { agentConfig = await rotateMcpToken(); agentStatus = await mcpStatus(); }} class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-muted)]"><RefreshCw size={13} /> Rotate token</button>
           <button type="button" onclick={testConnection} class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-muted)]"><CheckCircle2 size={13} /> Test connection</button>
         </div>
         {#if connectionMessage}<p class="text-xs text-[var(--color-muted-foreground)]">{connectionMessage}</p>{/if}
-        <p class="text-xs text-[var(--color-muted-foreground)]">Use the copied configuration in Codex, Claude Code, Cursor, or another Streamable HTTP MCP client. It includes the local endpoint and bearer token.</p>
+        <p class="text-xs text-[var(--color-muted-foreground)]">Choose your client before copying. The OpenCode option registers FramePress as native MCP tools; the compatible format is for clients that use <code>mcpServers</code>.</p>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label class="text-xs font-medium">Port<input type="number" min="1" max="65535" value={agentConfig.port} oninput={(event) => saveAgentConfig({ ...agentConfig!, port: Number((event.target as HTMLInputElement).value) })} class="mt-1 block h-9 w-full rounded-lg border border-[var(--color-border)] bg-transparent px-2 font-mono text-xs outline-none" /></label>
           <label class="text-xs font-medium">Maximum batch<input type="number" min="1" max="500" value={agentConfig.max_batch_size} oninput={(event) => saveAgentConfig({ ...agentConfig!, max_batch_size: Number((event.target as HTMLInputElement).value) })} class="mt-1 block h-9 w-full rounded-lg border border-[var(--color-border)] bg-transparent px-2 font-mono text-xs outline-none" /></label>

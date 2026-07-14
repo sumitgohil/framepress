@@ -86,16 +86,18 @@
           {statistics.summary ? format_bytes(statistics.summary.today_savings_bytes) : statistics.loading ? '…' : '—'}
         </p>
       </div>
-      <SavingsSparkline points={statistics.weekly?.trend ?? []} />
+      {#if (statistics.summary?.today_optimized_count ?? 0) > 0}
+        <SavingsSparkline points={statistics.weekly?.trend ?? []} />
+      {/if}
     </div>
     <div class="h-px bg-[var(--color-border)]"></div>
     <div>
-      <p class="text-xs font-medium text-[var(--color-muted-foreground)]">Images Optimized</p>
+      <p class="text-xs font-medium text-[var(--color-muted-foreground)]">Images Optimized Today</p>
       <p class="mt-1 text-xl font-semibold tabular-nums tracking-tight">
         {statistics.summary ? statistics.summary.today_optimized_count.toLocaleString() : statistics.loading ? '…' : '—'}
       </p>
       <p class="mt-0.5 text-[11px] text-[var(--color-muted-foreground)]">
-        {statistics.summary ? `${statistics.summary.total_optimized_count.toLocaleString()} total` : statistics.unavailable ? 'Statistics unavailable' : 'today'}
+        {statistics.summary ? `${statistics.summary.total_optimized_count.toLocaleString()} total` : statistics.unavailable ? 'Statistics unavailable' : 'lifetime'}
       </p>
     </div>
     <a

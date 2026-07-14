@@ -24,15 +24,20 @@ MCP access gives a client the ability to ask FramePress to process files within 
 1. Open FramePress and go to **Settings → Agent Access (MCP)**.
 2. Add the project or asset folders an agent may use under **Approved folders**.
 3. Turn on **Agent Access (MCP)**.
-4. Select **Copy MCP configuration**.
-5. Add the copied configuration to a Streamable HTTP MCP client, such as Codex, Claude Code, or Cursor.
+4. Choose **OpenCode** in the client selector, then select **Copy OpenCode configuration**.
+5. Add the copied entry to your OpenCode configuration and restart OpenCode.
 
-The copied configuration has this shape:
+On macOS, closing the FramePress window keeps the app available in the menu bar. Use its **Start MCP** / **Stop MCP** item to control the local service, or **Exit FramePress** to end the app.
+
+For OpenCode, the copied configuration has this shape. The `type: "remote"` field is required for OpenCode to register FramePress as MCP tools rather than treating its URL as an ordinary endpoint.
 
 ```json
 {
-  "mcpServers": {
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
     "framepress": {
+      "type": "remote",
+      "enabled": true,
       "url": "http://127.0.0.1:39421/mcp",
       "headers": {
         "Authorization": "Bearer <your-token>"
@@ -42,7 +47,7 @@ The copied configuration has this shape:
 }
 ```
 
-The exact port and token are generated and shown by your FramePress installation. Do not copy a token from documentation; use the one in Settings.
+The **Other compatible client** option copies the common `mcpServers` structure for clients that support it. The exact port and token are generated and shown by your FramePress installation. Do not copy a token from documentation; use the one in Settings.
 
 ## Typical agent workflow
 
@@ -75,6 +80,7 @@ Before queuing a folder, an agent should call `validate_inputs`. After `submit_o
 
 - **“MCP server is not running”** — turn on Agent Access in FramePress Settings and copy a fresh configuration.
 - **“No approved folders” or an access error** — add the parent project or asset folder in Approved folders, then retry validation.
-- **Authentication failure** — refresh the copied configuration or rotate the token and update the client.
+- **Authentication failure** — refresh the copied configuration or rotate the token and update the client. A `401` response without an `Authorization` header is expected.
+- **OpenCode uses shell commands instead of FramePress tools** — recopy the **OpenCode** configuration and confirm it is nested under `mcp.framepress` with `type` set to `remote`, then restart OpenCode.
 - **A port cannot be bound** — choose a different local port in Settings, then restart Agent Access.
 - **A file is not accepted** — FramePress currently re-encodes PNG, JPEG, and WebP. GIF and SVG are recognized at intake but are not re-encoded.
