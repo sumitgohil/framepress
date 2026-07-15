@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { Home, List, Clock, Settings, Droplet, Layers, ChartNoAxesCombined } from 'lucide-svelte';
+  import { Home, List, Clock, Settings, Layers, ChartNoAxesCombined } from 'lucide-svelte';
   import { cn } from '$lib/utils/cn';
   import { queue } from '$lib/stores/queue.svelte';
   import { statistics } from '$lib/stores/statistics.svelte';
@@ -37,12 +37,11 @@
 >
   <!-- Brand -->
   <div class="flex items-center gap-3 px-2 py-2">
-    <div
-      class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-brand-500)] text-white shadow-[var(--shadow-glow)]"
-      aria-hidden="true"
-    >
-      <Droplet size={22} fill="currentColor" />
-    </div>
+    <img
+      class="h-11 w-11 rounded-xl object-cover "
+      src="/images/framepress-logo.png"
+      alt="FramePress logo"
+    />
     <span class="text-xl font-semibold tracking-tight">FramePress</span>
   </div>
 

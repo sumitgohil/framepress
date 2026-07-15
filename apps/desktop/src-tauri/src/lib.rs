@@ -119,11 +119,16 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
     let exit = MenuItem::with_id(app, "exit", "Exit FramePress", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open_dashboard, &toggle_mcp, &exit])?;
 
-    let icon = app.default_window_icon().cloned();
+    // The bundled app icon is the full-colour brand artwork. Keep the
+    // monochrome artwork exclusively for the compact menu-bar presentation.
+    let icon = tauri::include_image!("icons/tray-icon.png");
     let menu_item = toggle_mcp.clone();
     let mut tray = TrayIconBuilder::with_id("main")
         .menu(&menu)
         .tooltip("FramePress")
+        // Use the supplied monochrome mark as a macOS template image so it
+        // stays legible in both the light and dark menu-bar appearances.
+        .icon_as_template(true)
         .show_menu_on_left_click(true)
         .on_menu_event(move |app, event| match event.id().as_ref() {
             "open-dashboard" => {
@@ -147,9 +152,7 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
             "exit" => app.exit(0),
             _ => {}
         });
-    if let Some(icon) = icon {
-        tray = tray.icon(icon);
-    }
+    tray = tray.icon(icon);
     tray.build(app)?;
 
     // The server may have been enabled in a previous session. Reflect its
