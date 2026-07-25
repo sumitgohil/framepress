@@ -13,12 +13,13 @@
     "lint": "prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
-    "tauri": "${CARGO_HOME:-$HOME/.cargo}/bin/cargo-tauri",
+    "tauri": "tauri",
     "tauri:dev": "pnpm tauri dev",
     "tauri:build": "pnpm tauri build"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",
+    "@tauri-apps/cli": "^2.0.0",
     "@sveltejs/kit": "^2.8.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
