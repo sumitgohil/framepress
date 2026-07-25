@@ -1,91 +1,101 @@
-# FramePress
+<p align="center">
+  <img src="apps/desktop/static/images/framepress-logo.png" width="116" alt="FramePress logo" />
+</p>
 
-**A local-first image optimizer for macOS — with a desktop workflow for people and an MCP interface for trusted AI agents.**
+<h1 align="center">FramePress</h1>
 
-FramePress makes images smaller without turning optimization into guesswork. Drop files or folders into the app, select an intent-based preset, and FramePress evaluates compatible encoders to keep the smallest result that meets the preset's visual-quality budget.
+<p align="center">
+  <strong>A local-first, MCP-enabled image optimizer for people and AI agents.</strong>
+</p>
 
-Everything happens on your Mac. There is no upload step, cloud processing, account, or telemetry requirement.
+<p align="center">
+  <a href="https://github.com/sumitgohil/framepress/actions/workflows/release.yml"><img src="https://github.com/sumitgohil/framepress/actions/workflows/release.yml/badge.svg" alt="Release builds" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="GPL-3.0-or-later license" /></a>
+  <img src="https://img.shields.io/badge/MCP-local%20and%20opt--in-6b4eff" alt="MCP local and opt-in" />
+  <img src="https://img.shields.io/badge/built%20with-Tauri%20%2B%20Svelte-24c8db" alt="Built with Tauri and Svelte" />
+</p>
 
-> FramePress is currently macOS-first and under active development. Feedback, issues, and contributions are welcome.
+FramePress makes image optimization deliberate, observable, and private. Its native desktop app gives people a fast drag-and-drop workflow; its opt-in [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server gives trusted local AI clients the same capabilities through a carefully bounded interface.
 
-## Why FramePress?
+No uploads. No account. No opaque cloud processing. Your images, history, analytics, and agent workflow stay on your machine.
 
-Image optimization should fit the way you work: a quick drag-and-drop task when you are at your desk, or a controlled capability an agent can call while helping with a project. FramePress provides both paths over the same local queue, so every job remains visible and measurable.
+> **Status:** macOS-first and actively developed. Cross-platform release builds are configured for Linux, Windows, Apple Silicon Macs, and Intel Macs.
 
-## Features
+## Why FramePress
 
-### Built for everyday image work
+| What matters                     | How FramePress approaches it                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Agent-ready, not agent-first** | MCP work enters the same queue, history, and analytics as work initiated from the desktop app.                                                |
+| **Local control**                | The MCP server is opt-in, loopback-only, bearer-token protected, and limited to folders the user explicitly approves.                         |
+| **Quality without guesswork**    | Multiple compatible encoders are evaluated and the smallest candidate that clears the selected visual-quality budget wins.                    |
+| **Safe by default**              | Originals remain untouched, outputs are sibling files, and lossy results must save at least 5% before replacing the original in the workflow. |
 
-- **Local-first by default.** Images are processed on-device and never leave your machine.
-- **Drag in files or folders.** FramePress recursively finds supported images, removes duplicates, and skips previously generated `-framepress` outputs.
-- **PNG, JPEG, and WebP optimization.** It uses OxiPNG, MozJPEG, and libwebp-based encoding paths to find a strong result for each image.
-- **Adaptive candidate selection.** Compatible candidates are measured against the original; FramePress retains the smallest one that clears the selected visual-distance budget.
-- **No larger replacements.** Lossy results must save at least 5%; otherwise FramePress keeps the original.
-- **Safe sibling outputs.** Optimized files are written beside the source using a `-framepress` suffix, preserving the original.
-- **Optional WebP copies.** Create a separate WebP output for PNG and JPEG files when a WebP deliverable is useful.
+## What you can do
 
-### Presets with clear intent
+### Optimize from the desktop
 
-Choose the trade-off that matches the job instead of tuning encoder flags:
+- Drop in individual files or folders; folder imports are recursive and de-duplicated.
+- Optimize PNG, JPEG, and WebP with OxiPNG, MozJPEG, and WebP encoding paths.
+- Choose intent-based presets: Lossless, Maximum Compression, Developer Assets, Website, Email, or Social Media.
+- Preserve the original format or create optional WebP copies for PNG and JPEG inputs.
+- Follow progress through a responsive queue with pause, resume, cancel, retry, and history views.
+- Review local savings trends, biggest wins, and results grouped by format, preset, and source.
 
-| Preset              | Designed for                                             |
-| ------------------- | -------------------------------------------------------- |
-| Lossless            | Pixel-perfect output with optimized encoding             |
-| Maximum Compression | The smallest practical file when speed is less important |
-| Developer Assets    | Icons, screenshots, and UI assets                        |
-| Website             | Fast-loading pages and image-heavy experiences           |
-| Email               | Smaller attachments and tighter size limits              |
-| Social Media        | Compact, visually punchy social assets                   |
+### Connect a trusted AI client through MCP
 
-### A workflow you can see
+FramePress exposes an opt-in local endpoint for tools such as Codex, Claude Code, or Cursor. An agent can validate files, submit and monitor batches, retry or cancel jobs, make WebP copies, and query local history and statistics.
 
-- **Queue controls** for pending, running, completed, failed, and cancelled work.
-- **Background processing** so desktop work stays responsive.
-- **Local history** of completed optimizations, including source, output, encoder, and savings.
-- **Statistics and trends** for bytes saved, reductions by format and preset, biggest wins, and work submitted by people versus agents.
+The integration is intentionally narrow:
 
-### MCP agent access — local and controlled
+- Listens on `127.0.0.1` only — never your network interface.
+- Requires a configurable bearer token that can be rotated in Settings.
+- Allows access only within directory roots approved by the desktop user.
+- Cannot alter global safety settings or approve directories on its own.
 
-FramePress can expose an opt-in [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) endpoint for trusted local clients such as Codex, Claude Code, or Cursor. Agents can validate inputs, submit and monitor batches, retry or cancel jobs, create WebP copies, and read local history and statistics.
-
-The MCP service is designed around deliberate user control:
-
-- It binds to `127.0.0.1` only; it is not reachable from your network.
-- It requires a bearer token, which can be rotated from Settings.
-- Agents can access only folders explicitly approved in FramePress.
-- Agent jobs use the same queue, history, and analytics as desktop jobs.
-- The desktop user retains control of global safety settings and directory approval.
-
-See [MCP agent access](docs/mcp.md) for setup, connection details, and the available tools.
+Read the [MCP integration guide](docs/mcp.md) for setup, the connection flow, and tool details.
 
 ## How it works
 
-```text
-Desktop UI or MCP client
-          ↓
-       Local queue
-          ↓
- Adaptive optimizer
-          ↓
- OxiPNG · MozJPEG · WebP
-          ↓
- Smallest candidate within the quality budget
+```mermaid
+flowchart LR
+    UI["Desktop UI"] --> Queue["Shared local queue"]
+    MCP["Trusted MCP client"] --> Queue
+    Queue --> Optimizer["Adaptive optimizer"]
+    Optimizer --> Engines["OxiPNG · MozJPEG · WebP"]
+    Engines --> Result["Smallest candidate within the quality budget"]
+    Result --> History["Local history & analytics"]
 ```
 
-For the design and component boundaries, read [ARCHITECTURE.md](ARCHITECTURE.md). The trade-offs behind key decisions live in [the ADRs](docs/adr/).
+1. FramePress detects the input format and resolves the selected preset.
+2. It runs compatible encoding candidates and measures their output.
+3. Lossy candidates are evaluated with a luminance-weighted YCbCr visual-distance score.
+4. The smallest candidate within the preset's budget is selected; marginal savings keep the original instead.
 
-## Development
+The interface and MCP server share the same Rust services rather than separate implementations. That keeps behavior consistent and makes agent activity visible to the person in control.
 
-### Requirements
+## Architecture
 
-- macOS 11 or later
-- Rust 1.75 or later
-- Node.js 20 or later
-- pnpm 9 or later
-- Xcode Command Line Tools
-- `cmake` and `pkg-config`
+```text
+apps/desktop/              SvelteKit interface + Tauri v2 shell
+crates/framepress-core/    queue, domain model, optimizer, engines, history
+crates/framepress-api/     future programmatic API boundary
+crates/framepress-cli/     future CLI boundary
+docs/                      MCP guide and architectural decisions
+```
 
-### Run locally
+The [architecture guide](ARCHITECTURE.md) explains the component boundaries and privacy model. Key design trade-offs are recorded in [ADRs](docs/adr/).
+
+## Run it locally
+
+### Prerequisites
+
+- macOS 11+ (the development workflow is currently macOS-first)
+- Rust 1.75+
+- Node.js 20+
+- pnpm 9+
+- Xcode Command Line Tools, `cmake`, and `pkg-config`
+
+### Development
 
 ```bash
 pnpm install
@@ -94,9 +104,9 @@ pnpm --filter @framepress/desktop check
 pnpm --filter @framepress/desktop tauri:dev
 ```
 
-The first build compiles native image libraries and may take a few minutes.
+The first build compiles native image libraries and can take a few minutes.
 
-### Useful checks
+### Verify changes
 
 ```bash
 cargo fmt --check
@@ -106,15 +116,13 @@ pnpm --filter @framepress/desktop test
 pnpm format:check
 ```
 
-## Project status and roadmap
+## Releases
 
-FramePress's current focus is a dependable macOS desktop workflow and safe local MCP access. Contributions that improve reliability, accessibility, test coverage, documentation, supported formats, encoders, packaging, and developer ergonomics are especially useful.
-
-Potential future directions include additional image formats and encoders, a standalone CLI, and automated release packaging. These are not commitments; please check or open an issue before investing significant implementation time.
+Pushing to `main` runs the release workflow. It builds installers for Linux, Windows, Apple Silicon macOS, and Intel macOS, then publishes them to the GitHub Release named after the version in `apps/desktop/src-tauri/tauri.conf.json`.
 
 ## Contributing
 
-We welcome bug reports, feature ideas, documentation improvements, and code contributions. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+Bug reports, feature ideas, documentation improvements, and code contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
