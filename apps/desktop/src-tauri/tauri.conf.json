@@ -36,7 +36,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": ["app", "dmg", "nsis", "msi"],
     "category": "DeveloperTool",
     "shortDescription": "Adaptive desktop image optimizer",
     "longDescription": "FramePress runs multiple compression engines against each image in parallel and picks the smallest output that still passes a perceptual quality gate.",
@@ -44,10 +44,20 @@
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns"
+      "icons/icon.icns",
+      "icons/icon.ico"
     ],
     "macOS": {
       "minimumSystemVersion": "11.0"
+    },
+    "windows": {
+      "wix": {
+        "language": ["en-US"]
+      },
+      "nsis": {
+        "languages": ["English"],
+        "displayLanguageSelector": false
+      }
     }
   }
 }
