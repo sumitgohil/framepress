@@ -50,6 +50,9 @@ jobs:
         with:
           targets: ${{ startsWith(matrix.os, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+      - name: Restore Rust build cache
+        uses: Swatinem/rust-cache@v2
+
       - name: Install Linux build dependencies
         if: matrix.os == 'ubuntu-22.04'
         run: |
