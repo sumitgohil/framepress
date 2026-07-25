@@ -4,7 +4,7 @@
 //! and the abstraction is preserved in the trait API).
 
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Mutex;
 
@@ -41,7 +41,7 @@ pub struct SqliteHistory {
 impl SqliteHistory {
     /// Open or create the DB at `config.path`. Runs migrations.
     pub fn open(config: SqliteHistoryConfig) -> anyhow::Result<Self> {
-        if config.path != PathBuf::from(":memory:") {
+        if config.path != Path::new(":memory:") {
             if let Some(parent) = config.path.parent() {
                 std::fs::create_dir_all(parent)?;
             }
@@ -434,7 +434,7 @@ fn build_breakdown(
         item.optimized_count += 1;
     }
     let mut breakdown: Vec<_> = grouped.into_values().collect();
-    breakdown.sort_by(|left, right| right.saved_bytes.cmp(&left.saved_bytes));
+    breakdown.sort_by_key(|item| std::cmp::Reverse(item.saved_bytes));
     breakdown
 }
 
