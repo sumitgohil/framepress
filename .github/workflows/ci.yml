@@ -18,39 +18,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macOS-first for Phase 1. Add linux/windows when we ship those builds.
-        os: [macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           components: rustfmt, clippy
 
-      - name: Cache cargo registry & target
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', 'rust-toolchain.toml') }}
-          restore-keys: |
-            cargo-${{ runner.os }}-
+      - name: Restore Rust build cache
+        uses: Swatinem/rust-cache@v2
 
-      - name: Cache cargo build (sccache)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/sccache
-          key: sccache-${{ runner.os }}
-
-      - name: Install sccache
-        run: cargo install sccache --locked || true
+      - name: Install Linux Tauri dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
 
       - name: cargo fmt
         run: cargo fmt --all -- --check
@@ -63,7 +50,7 @@ jobs:
 
   frontend:
     name: Frontend (pnpm)
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
@@ -71,42 +58,40 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: svelte-kit sync
-        run: pnpm --filter @tinydrop/desktop exec svelte-kit sync
+        run: pnpm --filter @framepress/desktop exec svelte-kit sync
 
       - name: svelte-check (typecheck)
-        run: pnpm --filter @tinydrop/desktop exec svelte-check --tsconfig ./tsconfig.json --threshold error
+        run: pnpm --filter @framepress/desktop exec svelte-check --tsconfig ./tsconfig.json --threshold error
 
       - name: Frontend test (vitest)
-        run: pnpm --filter @tinydrop/desktop test -- --run
-        continue-on-error: false
+        run: pnpm --filter @framepress/desktop test
 
       - name: Prettier check
         run: pnpm format:check
 
-  license:
-    name: License + README sanity
+  metadata:
+    name: License and repository metadata
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Check LICENSE exists
+      - name: Check GPL-3.0 license text
         run: test -f LICENSE
-      - name: Check LICENSE-MIT exists
-        run: test -f LICENSE-MIT
-      - name: Check LICENSE-APACHE exists
-        run: test -f LICENSE-APACHE
-      - name: README has 'Phase 1' status section
-        run: grep -q 'Phase 1' README.md
+      - name: Check license metadata agrees
+        run: |
+          grep -q 'GNU GENERAL PUBLIC LICENSE' LICENSE
+          grep -q '"license": "GPL-3.0-or-later"' package.json
+          grep -q 'license = "GPL-3.0-or-later"' Cargo.toml
+          grep -q 'GPL-3.0-or-later' README.md

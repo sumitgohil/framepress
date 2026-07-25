@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { ListTodo, Pause, Play } from 'lucide-svelte';
+  import { ListTodo, Pause, Play } from "lucide-svelte";
 
-  import QueueCard from '$lib/components/QueueCard.svelte';
-  import Toaster from '$lib/components/Toaster.svelte';
+  import QueueCard from "$lib/components/QueueCard.svelte";
+  import Toaster from "$lib/components/Toaster.svelte";
 
-  import { queue } from '$lib/stores/queue.svelte';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { queue } from "$lib/stores/queue.svelte";
+  import { toast } from "$lib/stores/toast.svelte";
 
   async function handle_cancel(job_id: string) {
     try {
       await queue.cancel(job_id);
-      toast.info('Cancelled', 'The job was stopped.');
+      toast.info("Cancelled", "The job was stopped.");
     } catch (err) {
-      toast.error('Cancel failed', String(err));
+      toast.error("Cancel failed", String(err));
     }
   }
 </script>
 
 <svelte:head>
-  <title>Queue · TinyDrop</title>
+  <title>Queue · FramePress</title>
 </svelte:head>
 
 <div class="mx-auto flex max-w-3xl flex-col gap-6 px-8 py-10">
@@ -37,7 +37,7 @@
         type="button"
         class="flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-transparent px-3 text-sm font-medium hover:bg-[var(--color-muted)]"
         onclick={() => queue.toggle_pause()}
-        aria-label={queue.paused ? 'Resume queue' : 'Pause queue'}
+        aria-label={queue.paused ? "Resume queue" : "Pause queue"}
       >
         {#if queue.paused}
           <Play size={14} aria-hidden="true" />

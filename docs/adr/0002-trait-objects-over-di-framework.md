@@ -4,7 +4,7 @@
 
 ## Context
 
-`tinydrop-core` is built around `CompressionEngine` and `PresetResolver` traits, both used as `dyn Trait` objects (e.g. `Vec<Box<dyn CompressionEngine>>`). The `AdaptiveOptimizer` and `QueueProcessor` need an instance of these. The Tauri command layer needs to share the same instances across command invocations.
+`framepress-core` is built around `CompressionEngine` and `PresetResolver` traits, both used as `dyn Trait` objects (e.g. `Vec<Box<dyn CompressionEngine>>`). The `AdaptiveOptimizer` and `QueueProcessor` need an instance of these. The Tauri command layer needs to share the same instances across command invocations.
 
 Two schools of thought:
 

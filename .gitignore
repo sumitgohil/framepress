@@ -53,4 +53,5 @@ coverage/
 *.rpm
 
 # Design assets (kept on disk for reference, not tracked)
-TinyDrop UI Inspiration.png
+SampleImages/*
+/.playwright-mcp/*

@@ -8,58 +8,59 @@
  * the `<html>` element, which Tailwind v4 reads via `@custom-variant dark`.
  */
 
-import { browser } from '$app/environment';
+import { browser } from "$app/environment";
 
-export type ThemeMode = 'light' | 'dark' | 'system';
-export type ResolvedTheme = 'light' | 'dark';
+export type ThemeMode = "light" | "dark" | "system";
+export type ResolvedTheme = "light" | "dark";
 
-const STORAGE_KEY = 'tinydrop:theme';
+const STORAGE_KEY = "framepress:theme";
 
 function read_initial_mode(): ThemeMode {
-  if (!browser) return 'system';
+  if (!browser) return "system";
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+    if (stored === "light" || stored === "dark" || stored === "system") {
       return stored;
     }
   } catch {
     // ignore storage errors (private browsing etc.)
   }
-  return 'system';
+  return "system";
 }
 
 function resolve(mode: ThemeMode): ResolvedTheme {
-  if (mode === 'light' || mode === 'dark') return mode;
-  if (!browser) return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (mode === "light" || mode === "dark") return mode;
+  if (!browser) return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function apply(resolved: ResolvedTheme) {
   if (!browser) return;
   const root = document.documentElement;
-  root.classList.toggle('dark', resolved === 'dark');
+  root.classList.toggle("dark", resolved === "dark");
   root.style.colorScheme = resolved;
 }
 
 function create_theme_store() {
   let mode = $state<ThemeMode>(read_initial_mode());
-  let resolved = $state<ResolvedTheme>('light');
+  let resolved = $state<ResolvedTheme>(resolve(mode));
 
-  // React to system preference changes when in 'system' mode.
-  $effect(() => {
-    if (!browser) return;
-    resolved = resolve(mode);
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => {
-      if (mode === 'system') {
-        resolved = resolve('system');
+  // Stores are created at module initialization, outside a component's
+  // lifecycle. A `$effect` here throws `effect_orphan` in Svelte 5 and turns
+  // route navigation into the error page. A normal media-query listener keeps
+  // the system mode responsive without depending on component ownership.
+  if (browser) {
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    mql.addEventListener("change", () => {
+      if (mode === "system") {
+        resolved = resolve("system");
         apply(resolved);
       }
-    };
-    mql.addEventListener('change', handler);
+    });
     apply(resolved);
-    return () => mql.removeEventListener('change', handler);
-  });
+  }
 
   return {
     get mode() {
@@ -79,7 +80,7 @@ function create_theme_store() {
       apply(resolved);
     },
     cycle() {
-      const order: ThemeMode[] = ['light', 'dark', 'system'];
+      const order: ThemeMode[] = ["light", "dark", "system"];
       const next = order[(order.indexOf(mode) + 1) % order.length];
       this.set(next);
     },

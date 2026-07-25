@@ -1,21 +1,24 @@
 //! AppContext — the manual DI container for the desktop shell.
 //!
-//! Wraps the `tinydrop-core` [`AdaptiveOptimizer`] and (in later branches)
+//! Wraps the `framepress-core` [`AdaptiveOptimizer`] and (in later branches)
 //! the queue processor, history repository, and settings store. Held in
 //! `tauri::State<AppContext>` and fetched by every command.
 
 use std::sync::Arc;
 
 use anyhow::Context as _;
+use tauri::AppHandle;
 use tokio::sync::Mutex;
 use tracing::info;
 
-use tinydrop_core::{
+use framepress_core::{
     default_registry,
     history::{HistoryRepository, SqliteHistory, SqliteHistoryConfig},
     AdaptiveOptimizer, CompressionPreset, ImageFormat, QueueItem, QueueProcessor, QueueStats,
     ScoredCandidate,
 };
+
+use crate::mcp::AgentAccessManager;
 
 /// The application context. Cheap to clone — all heavy state is behind
 /// `Arc`/`Mutex` or trait objects that are themselves `Send + Sync`.
@@ -29,11 +32,13 @@ pub struct AppContext {
     queue: Arc<QueueProcessor>,
     /// SQLite-backed history store.
     history: Arc<SqliteHistory>,
+    /// Local MCP server configuration and lifecycle manager.
+    agent_access: Arc<AgentAccessManager>,
 }
 
 impl AppContext {
     /// Construct a new context. Wires the default engine registry.
-    pub fn build() -> anyhow::Result<Self> {
+    pub fn build(app_handle: AppHandle) -> anyhow::Result<Self> {
         // Presets own their visual-quality budgets. Do not apply the old
         // global default gate here: it is stricter than Email and rejects the
         // lossy WebP candidate that the preset intentionally allows.
@@ -43,15 +48,22 @@ impl AppContext {
         })?);
         let history_repo: Arc<dyn HistoryRepository> = history.clone();
         let queue = Arc::new(QueueProcessor::new(optimizer.clone()).with_history(history_repo));
+        let agent_access = Arc::new(AgentAccessManager::new(
+            queue.clone(),
+            history.clone(),
+            optimizer.clone(),
+            app_handle,
+        ));
         info!(
             engines = optimizer.engines().len(),
-            "TinyDrop context initialized",
+            "FramePress context initialized",
         );
         Ok(Self {
             optimizer,
             active_preset: Arc::new(Mutex::new(CompressionPreset::Website)),
             queue,
             history,
+            agent_access,
         })
     }
 
@@ -68,6 +80,11 @@ impl AppContext {
     /// The history store.
     pub fn history(&self) -> Arc<SqliteHistory> {
         self.history.clone()
+    }
+
+    /// Local MCP server configuration and lifecycle manager.
+    pub fn agent_access(&self) -> Arc<AgentAccessManager> {
+        self.agent_access.clone()
     }
 
     /// The user's currently-selected preset.
@@ -97,7 +114,7 @@ impl AppContext {
 
     /// Detect an image's format from a file path.
     pub fn detect_format(&self, path: &std::path::Path) -> anyhow::Result<ImageFormat> {
-        Ok(tinydrop_core::optimizer::detect_format(path)?)
+        Ok(framepress_core::optimizer::detect_format(path)?)
     }
 
     /// Snapshot the current queue items.

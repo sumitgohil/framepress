@@ -3,7 +3,7 @@
 
 use tauri::State;
 
-use tinydrop_core::CompressionPreset;
+use framepress_core::CompressionPreset;
 
 use crate::context::AppContext;
 

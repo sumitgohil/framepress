@@ -1,9 +1,9 @@
 {
-  "name": "tinydrop",
+  "name": "framepress",
   "version": "0.1.0",
   "private": true,
-  "description": "TinyDrop monorepo root",
-  "license": "MIT OR Apache-2.0",
+  "description": "FramePress monorepo root",
+  "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
@@ -13,8 +13,8 @@
     "lint": "pnpm -r lint",
     "check": "pnpm -r check",
     "test": "pnpm -r test",
-    "format": "prettier --write \"**/*.{ts,svelte,json,md,css}\" --ignore-path .gitignore",
-    "format:check": "prettier --check \"**/*.{ts,svelte,json,md,css}\" --ignore-path .gitignore"
+    "format": "prettier --write \"**/*.{ts,svelte,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,svelte,json,md,css}\""
   },
   "devDependencies": {
     "prettier": "^3.3.3",

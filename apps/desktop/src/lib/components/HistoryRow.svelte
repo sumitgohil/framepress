@@ -1,9 +1,15 @@
 <script lang="ts">
-  import { FolderOpen, ExternalLink, AlertCircle, CheckCircle2, Image as ImageIcon } from 'lucide-svelte';
-  import { revealItemInDir, openPath } from '@tauri-apps/plugin-opener';
+  import {
+    FolderOpen,
+    ExternalLink,
+    AlertCircle,
+    CheckCircle2,
+  } from "lucide-svelte";
+  import { revealItemInDir, openPath } from "@tauri-apps/plugin-opener";
 
-  import type { HistoryRow } from '$lib/ipc/types';
-  import { format_bytes, format_relative } from '$lib/utils/format';
+  import ImagePreview from "$lib/components/ImagePreview.svelte";
+  import type { HistoryRow } from "$lib/ipc/types";
+  import { format_bytes, format_relative } from "$lib/utils/format";
 
   type Props = {
     row: HistoryRow;
@@ -11,10 +17,13 @@
 
   let { row }: Props = $props();
 
-  let filename = $derived(row.input_path.split('/').pop() ?? row.input_path);
+  let filename = $derived(row.input_path.split("/").pop() ?? row.input_path);
   let savings = $derived(
     row.original_bytes > 0 && row.optimized_bytes !== null
-      ? Math.round(((row.original_bytes - row.optimized_bytes) / row.original_bytes) * 100)
+      ? Math.round(
+          ((row.original_bytes - row.optimized_bytes) / row.original_bytes) *
+            100,
+        )
       : null,
   );
 
@@ -45,35 +54,46 @@
     class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
     aria-hidden="true"
   >
-    {#if row.thumbnail_path}
-      <img src="file://{row.thumbnail_path}" alt="" class="h-full w-full object-cover" />
-    {:else}
-      <ImageIcon size={16} />
-    {/if}
+    <ImagePreview
+      paths={[row.thumbnail_path, row.output_path, row.input_path]}
+      size={16}
+    />
   </div>
 
   <div class="min-w-0 flex-1">
     <p class="truncate text-sm font-medium">{filename}</p>
     <p class="text-xs text-[var(--color-muted-foreground)]">
       {#if row.optimized_bytes !== null && savings !== null}
-        <span class="font-mono tabular-nums">{format_bytes(row.optimized_bytes)}</span>
-        <span class="text-[var(--color-muted-foreground)]"> of {format_bytes(row.original_bytes)}</span>
+        <span class="font-mono tabular-nums"
+          >{format_bytes(row.optimized_bytes)}</span
+        >
+        <span class="text-[var(--color-muted-foreground)]">
+          of {format_bytes(row.original_bytes)}</span
+        >
         {#if savings > 0}
           <span class="ml-1 text-[var(--color-success)]">−{savings}%</span>
         {/if}
       {:else}
-        <span class="italic">{row.error_message ?? row.status.toLowerCase()}</span>
+        <span class="italic"
+          >{row.error_message ?? row.status.toLowerCase()}</span
+        >
       {/if}
       · {format_relative(row.completed_at ?? row.started_at)}
       {#if row.engine}
         · {row.engine}
       {/if}
+      ·
+      <span
+        class={row.source.startsWith("Agent (MCP)")
+          ? "text-[var(--color-brand-400)]"
+          : ""}>{row.source}</span
+      >
     </p>
   </div>
 
-  {#if row.status === 'Completed'}
+  {#if row.status === "completed"}
     <CheckCircle2 size={16} class="shrink-0 text-[var(--color-success)]" />
-  {:else if row.status === 'Failed'}
+  {:else if row.status === "failed"}
     <AlertCircle size={16} class="shrink-0 text-[var(--color-danger)]" />
   {/if}
 

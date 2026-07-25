@@ -1,24 +1,26 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/tinydrop-core",
-    "crates/tinydrop-cli",
-    "crates/tinydrop-api",
+    "crates/framepress-core",
+    "crates/framepress-cli",
+    "crates/framepress-api",
     "apps/desktop/src-tauri",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0-or-later"
 rust-version = "1.75"
-authors = ["TinyDrop contributors"]
-repository = "https://github.com/tinydrop/tinydrop"
+authors = ["FramePress contributors"]
+repository = "https://github.com/sumitgohil/framepress"
 
 [workspace.dependencies]
 # Core image & format deps
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
 oxipng = "9"
+imagequant = "4.4.1"
+png = "0.17.16"
 webp = "0.3"
 mozjpeg = "0.10"
 fast_image_resize = "5"
@@ -47,6 +49,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 blake3 = "1"
 bytes = "1"
 tempfile = "3"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+rand = "0.8"
+rmcp = { version = "0.16.0", features = ["server", "transport-streamable-http-server"] }
+axum = "0.7"
+tokio-util = "0.7"
+schemars = "1"
 
 # Testing
 proptest = "1"

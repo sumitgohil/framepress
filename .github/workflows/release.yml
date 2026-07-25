@@ -1,0 +1,79 @@
+name: Release desktop application
+
+# Publishing is intentionally limited to the main branch. The action creates
+# (or updates) the GitHub release for the version in tauri.conf.json.
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-22.04
+            args: --bundles appimage,deb
+          - name: Windows
+            os: windows-latest
+            args: --bundles nsis,msi
+          - name: macOS (Apple Silicon)
+            os: macos-14
+            args: --target aarch64-apple-darwin --bundles app,dmg
+          - name: macOS (Intel)
+            os: macos-14
+            args: --target x86_64-apple-darwin --bundles app,dmg
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ startsWith(matrix.os, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Restore Rust build cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Linux build dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and publish GitHub release assets
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tauriScript: pnpm tauri
+          tagName: v__VERSION__
+          releaseName: FramePress v__VERSION__
+          releaseBody: See the assets below to download and install this version.
+          generateReleaseNotes: true
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+          releaseAssetNamePattern: FramePress_[version]_[platform]_[arch][setup].[ext]

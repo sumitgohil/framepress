@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report something that's broken in TinyDrop
+about: Report something that's broken in FramePress
 title: "[bug] "
 labels: ["bug"]
 ---
@@ -25,11 +25,11 @@ labels: ["bug"]
 
 ## Environment
 
-- TinyDrop version: (e.g. 0.1.0)
+- FramePress version: (e.g. 0.1.0)
 - macOS version: (e.g. Sonoma 14.5)
 - Image format(s) involved: (PNG / JPEG / WebP / other)
 
 ## Logs / screenshots
 
 <!-- If applicable, attach a screenshot or relevant log lines from the
-Console.app or `~/Library/Logs/tinydrop/`. -->
+Console.app or `~/Library/Logs/framepress/`. -->

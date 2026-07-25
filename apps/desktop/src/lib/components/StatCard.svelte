@@ -12,18 +12,15 @@
   let { label, value, hint }: Props = $props();
 </script>
 
-<div
-  class="glass flex flex-col gap-0.5 rounded-xl p-3"
-  aria-label={label}
->
-  <span class="text-[11px] font-medium tracking-wide text-[var(--color-muted-foreground)] uppercase">
+<div class="flex flex-col gap-1" aria-label={label}>
+  <span class="text-sm font-medium text-[var(--color-muted-foreground)]">
     {label}
   </span>
-  <span class="text-2xl font-semibold tabular-nums tracking-tight">
+  <span class="text-[1.65rem] font-semibold tabular-nums tracking-tight">
     {value}
   </span>
   {#if hint}
-    <span class="text-[11px] text-[var(--color-muted-foreground)]">
+    <span class="text-xs text-[var(--color-muted-foreground)]">
       {hint}
     </span>
   {/if}

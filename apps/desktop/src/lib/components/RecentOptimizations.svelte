@@ -1,83 +1,144 @@
 <script lang="ts">
-  import { Image, CheckCircle2, ArrowRight } from 'lucide-svelte';
+  import { CheckCircle2, CircleDashed, Image, XCircle } from "lucide-svelte";
 
-  import type { HistoryRow } from '$lib/ipc/types';
-  import { format_bytes, format_relative } from '$lib/utils/format';
+  import ImagePreview from "$lib/components/ImagePreview.svelte";
+  import type { ActivityRow } from "$lib/ipc/types";
+  import { format_bytes, format_relative } from "$lib/utils/format";
 
   type Props = {
-    rows: HistoryRow[];
+    rows: ActivityRow[];
   };
 
   let { rows }: Props = $props();
 
-  let visible = $derived(rows.slice(0, 5));
+  // Dashboard is the user's desktop workflow. Agent-originated work has
+  // dedicated visibility in Queue, History, and Statistics instead.
+  let visible = $derived(
+    rows.filter((row) => row.source === "Desktop").slice(0, 3),
+  );
+
+  // Pending queue items may not have a known format or timestamp yet — fall
+  // back to the preset name and the present moment so the row still renders.
+  let format_label = $derived((row: ActivityRow) =>
+    row.format ? row.format.toUpperCase() : row.preset.toUpperCase(),
+  );
+  let activity_time = $derived(
+    (row: ActivityRow) => row.completed_at ?? row.started_at ?? Date.now(),
+  );
 </script>
 
-<section class="space-y-3" aria-label="Recent optimizations">
+<section class="space-y-3" aria-label="Recent activity">
   <div class="flex items-center justify-between">
-    <h2 class="text-base font-semibold tracking-tight">Recent Optimizations</h2>
-    {#if rows.length > 0}
-      <a
-        href="/history"
-        class="text-xs font-medium text-[var(--color-brand-500)] hover:underline"
-      >
-        View All
-      </a>
-    {/if}
+    <h2 class="text-sm font-semibold tracking-tight">Recent Activity</h2>
+    <a
+      href="/history"
+      class="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+    >
+      View All
+    </a>
   </div>
 
   {#if visible.length === 0}
     <div
-      class="glass flex items-center gap-3 rounded-xl p-4 text-sm text-[var(--color-muted-foreground)]"
+      class="glass flex min-h-22 items-center gap-3 rounded-xl px-5 text-sm text-[var(--color-muted-foreground)]"
     >
       <Image size={18} aria-hidden="true" />
       Drop an image to see your first optimization here.
     </div>
   {:else}
-    <ul class="space-y-1.5">
+    <ul
+      class="glass overflow-hidden rounded-xl divide-y divide-[var(--color-border)]"
+    >
       {#each visible as row (row.id)}
-        {@const savings = row.original_bytes > 0 && row.optimized_bytes !== null
-          ? Math.round(((row.original_bytes - row.optimized_bytes) / row.original_bytes) * 100)
-          : null}
+        {@const savings =
+          row.original_bytes !== null &&
+          row.original_bytes > 0 &&
+          row.optimized_bytes !== null
+            ? Math.max(
+                0,
+                Math.round(
+                  ((row.original_bytes - row.optimized_bytes) /
+                    row.original_bytes) *
+                    100,
+                ),
+              )
+            : null}
+        {@const saved_bytes =
+          row.original_bytes !== null && row.optimized_bytes !== null
+            ? Math.max(0, row.original_bytes - row.optimized_bytes)
+            : null}
         <li>
           <article
-            class="glass flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--color-muted)]"
+            class="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-x-5 px-4 py-3.5 sm:px-5"
           >
-            <div
-              class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
-              aria-hidden="true"
-            >
-              {#if row.thumbnail_path}
-                <img
-                  src="file://{row.thumbnail_path}"
-                  alt=""
-                  class="h-full w-full object-cover"
+            <div class="flex min-w-0 items-center gap-3.5">
+              <div
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
+                aria-hidden="true"
+              >
+                <ImagePreview
+                  paths={[row.thumbnail_path, row.output_path, row.input_path]}
+                  size={18}
                 />
-              {:else}
-                <Image size={16} />
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold tracking-tight">
+                  {row.input_path.split("/").pop() ?? row.input_path}
+                </p>
+                <p class="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+                  {format_label(row)} · {row.engine ?? row.preset}
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="hidden min-w-20 text-right text-sm font-semibold tabular-nums text-[var(--color-foreground)] sm:block"
+            >
+              {saved_bytes === null ? "—" : `↓ ${format_bytes(saved_bytes)}`}
+            </div>
+
+            <div class="hidden min-w-11 text-right sm:block">
+              {#if savings !== null}
+                <span
+                  class="rounded-md bg-[var(--color-success)]/12 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-[var(--color-success)]"
+                >
+                  {savings}%
+                </span>
               {/if}
             </div>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">
-                {row.input_path.split('/').pop() ?? row.input_path}
-              </p>
-              <p class="text-xs text-[var(--color-muted-foreground)]">
-                {#if row.optimized_bytes !== null}
-                  <span class="font-mono">{format_bytes(row.optimized_bytes)}</span>
-                  {#if savings !== null && savings > 0}
-                    <span class="ml-1 text-[var(--color-success)]">−{savings}%</span>
-                  {/if}
-                {:else}
-                  <span class="italic">pending</span>
-                {/if}
-                · {format_relative(row.completed_at ?? row.started_at)}
-              </p>
+
+            <div
+              class="flex min-w-20 items-center justify-end gap-3 text-xs text-[var(--color-muted-foreground)]"
+            >
+              <span class="hidden md:inline"
+                >{format_relative(activity_time(row))}</span
+              >
+              {#if row.status === "completed"}
+                <CheckCircle2
+                  size={19}
+                  strokeWidth={2.25}
+                  class="text-[var(--color-success)]"
+                />
+              {:else if row.status === "failed"}
+                <XCircle
+                  size={19}
+                  strokeWidth={2.25}
+                  class="text-[var(--color-danger)]"
+                />
+              {:else if row.status === "cancelled"}
+                <CircleDashed
+                  size={19}
+                  strokeWidth={2.25}
+                  class="text-[var(--color-muted-foreground)]"
+                />
+              {:else}
+                <CircleDashed
+                  size={19}
+                  strokeWidth={2.25}
+                  class="animate-spin text-[var(--color-brand-500)]"
+                />
+              {/if}
             </div>
-            {#if row.status === 'Completed'}
-              <CheckCircle2 size={16} class="text-[var(--color-success)]" />
-            {:else}
-              <ArrowRight size={16} class="text-[var(--color-muted-foreground)]" />
-            {/if}
           </article>
         </li>
       {/each}
