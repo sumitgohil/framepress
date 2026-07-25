@@ -1,15 +1,23 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, X, AlertCircle, CheckCircle2, Sparkles, FolderOpen } from 'lucide-svelte';
-  import { revealItemInDir } from '@tauri-apps/plugin-opener';
-  import { onMount } from 'svelte';
+  import {
+    ChevronDown,
+    ChevronUp,
+    X,
+    AlertCircle,
+    CheckCircle2,
+    Sparkles,
+    FolderOpen,
+  } from "lucide-svelte";
+  import { revealItemInDir } from "@tauri-apps/plugin-opener";
+  import { onMount } from "svelte";
 
-  import ImagePreview from '$lib/components/ImagePreview.svelte';
-  import { existingWebpCopy, exportWebpCopy } from '$lib/ipc/commands';
-  import type { QueueItem } from '$lib/ipc/types';
-  import { PRESET_LABELS } from '$lib/stores/settings.svelte';
-  import { toast } from '$lib/stores/toast.svelte';
-  import { format_bytes } from '$lib/utils/format';
-  import { cn } from '$lib/utils/cn';
+  import ImagePreview from "$lib/components/ImagePreview.svelte";
+  import { existingWebpCopy, exportWebpCopy } from "$lib/ipc/commands";
+  import type { QueueItem } from "$lib/ipc/types";
+  import { PRESET_LABELS } from "$lib/stores/settings.svelte";
+  import { toast } from "$lib/stores/toast.svelte";
+  import { format_bytes } from "$lib/utils/format";
+  import { cn } from "$lib/utils/cn";
 
   type Props = {
     item: QueueItem;
@@ -21,45 +29,51 @@
   let exporting_webp = $state(false);
   let webp_copy_path = $state<string | null>(null);
 
-  let filename = $derived(item.input_path.split('/').pop() ?? item.input_path);
-  let webp_recommendation = $derived(item.format === 'png' || item.format === 'jpeg');
+  let filename = $derived(item.input_path.split("/").pop() ?? item.input_path);
+  let webp_recommendation = $derived(
+    item.format === "png" || item.format === "jpeg",
+  );
   let preset_label = $derived(PRESET_LABELS[item.preset]);
 
   let status_label = $derived.by(() => {
     switch (item.status) {
-      case 'pending':
-        return 'Queued';
-      case 'running':
-        return 'Optimizing…';
-      case 'completed':
+      case "pending":
+        return "Queued";
+      case "running":
+        return "Optimizing…";
+      case "completed":
         return item.savings_pct !== null && item.savings_pct > 0
           ? `Saved ${item.savings_pct.toFixed(0)}%`
-          : 'Completed';
-      case 'failed':
-        return 'Failed';
-      case 'cancelled':
-        return 'Cancelled';
+          : "Completed";
+      case "failed":
+        return "Failed";
+      case "cancelled":
+        return "Cancelled";
     }
   });
 
   let status_color = $derived.by(() => {
     switch (item.status) {
-      case 'completed':
-        return 'text-[var(--color-success)]';
-      case 'failed':
-        return 'text-[var(--color-danger)]';
-      case 'cancelled':
-        return 'text-[var(--color-muted-foreground)]';
+      case "completed":
+        return "text-[var(--color-success)]";
+      case "failed":
+        return "text-[var(--color-danger)]";
+      case "cancelled":
+        return "text-[var(--color-muted-foreground)]";
       default:
-        return 'text-[var(--color-brand-500)]';
+        return "text-[var(--color-brand-500)]";
     }
   });
 
   let progress_pct = $derived.by(() => {
-    if (item.status === 'completed' || item.status === 'failed' || item.status === 'cancelled') {
+    if (
+      item.status === "completed" ||
+      item.status === "failed" ||
+      item.status === "cancelled"
+    ) {
       return 100;
     }
-    if (item.status === 'running') return 50; // indeterminate mid-flight
+    if (item.status === "running") return 50; // indeterminate mid-flight
     return 5;
   });
 
@@ -77,11 +91,17 @@
     if (exporting_webp) return;
     exporting_webp = true;
     try {
-      const copy = await exportWebpCopy({ inputPath: item.input_path, preset: item.preset });
+      const copy = await exportWebpCopy({
+        inputPath: item.input_path,
+        preset: item.preset,
+      });
       webp_copy_path = copy.output_path;
-      toast.success('WebP copy created', `${format_bytes(copy.optimized_bytes)} · original unchanged`);
+      toast.success(
+        "WebP copy created",
+        `${format_bytes(copy.optimized_bytes)} · original unchanged`,
+      );
     } catch (error) {
-      toast.error('WebP export failed', String(error));
+      toast.error("WebP export failed", String(error));
     } finally {
       exporting_webp = false;
     }
@@ -92,7 +112,10 @@
     try {
       await revealItemInDir(webp_copy_path);
     } catch {
-      toast.error('Could not show WebP copy', 'The output may have been moved or deleted.');
+      toast.error(
+        "Could not show WebP copy",
+        "The output may have been moved or deleted.",
+      );
     }
   }
 </script>
@@ -122,31 +145,37 @@
           disabled={!item.candidates_log}
           aria-expanded={expanded}
         >
-          {expanded ? 'Hide' : 'Details'}
+          {expanded ? "Hide" : "Details"}
         </button>
       </div>
 
-      <div class="flex items-center gap-2 text-xs text-[var(--color-muted-foreground)]">
-        <span class={cn('font-medium', status_color)}>
-          {#if item.status === 'completed'}
+      <div
+        class="flex items-center gap-2 text-xs text-[var(--color-muted-foreground)]"
+      >
+        <span class={cn("font-medium", status_color)}>
+          {#if item.status === "completed"}
             <CheckCircle2 size={12} class="inline -mt-0.5" />
-          {:else if item.status === 'failed'}
+          {:else if item.status === "failed"}
             <AlertCircle size={12} class="inline -mt-0.5" />
           {/if}
           {status_label}
         </span>
-        {#if item.engine && item.status === 'completed'}
+        {#if item.engine && item.status === "completed"}
           <span aria-hidden="true">·</span>
           <span>via {item.engine}</span>
         {/if}
         <span aria-hidden="true">·</span>
         <span>{preset_label}</span>
         <span aria-hidden="true">·</span>
-        <span class={item.source.startsWith('Agent (MCP)') ? 'text-[var(--color-brand-400)]' : ''}>{item.source}</span>
+        <span
+          class={item.source.startsWith("Agent (MCP)")
+            ? "text-[var(--color-brand-400)]"
+            : ""}>{item.source}</span
+        >
         {#if item.original_bytes !== null}
           <span aria-hidden="true">·</span>
           <span class="font-mono tabular-nums">
-            {#if item.optimized_bytes !== null && item.status === 'completed'}
+            {#if item.optimized_bytes !== null && item.status === "completed"}
               {format_bytes(item.optimized_bytes)}
               <span class="text-[var(--color-muted-foreground)]">
                 ({format_bytes(item.original_bytes)})
@@ -168,26 +197,33 @@
       >
         <div
           class={cn(
-            'h-full rounded-full transition-[width] duration-500 ease-out',
-            item.status === 'completed'
-              ? 'bg-[var(--color-success)]'
-              : item.status === 'failed' || item.status === 'cancelled'
-                ? 'bg-[var(--color-danger)]'
-                : 'bg-[var(--color-brand-500)]',
+            "h-full rounded-full transition-[width] duration-500 ease-out",
+            item.status === "completed"
+              ? "bg-[var(--color-success)]"
+              : item.status === "failed" || item.status === "cancelled"
+                ? "bg-[var(--color-danger)]"
+                : "bg-[var(--color-brand-500)]",
           )}
           style="width: {progress_pct}%;"
         ></div>
       </div>
 
-      {#if item.error_message && (item.status === 'failed' || item.status === 'cancelled')}
+      {#if item.error_message && (item.status === "failed" || item.status === "cancelled")}
         <p class="text-xs text-[var(--color-danger)]">{item.error_message}</p>
       {/if}
 
-      {#if item.status === 'completed' && webp_recommendation}
-        <div class="flex items-start gap-2 rounded-lg bg-[var(--color-brand-500)]/8 px-2.5 py-2 text-xs leading-5 text-[var(--color-muted-foreground)]">
-          <Sparkles size={14} class="mt-0.5 shrink-0 text-[var(--color-brand-500)]" aria-hidden="true" />
+      {#if item.status === "completed" && webp_recommendation}
+        <div
+          class="flex items-start gap-2 rounded-lg bg-[var(--color-brand-500)]/8 px-2.5 py-2 text-xs leading-5 text-[var(--color-muted-foreground)]"
+        >
+          <Sparkles
+            size={14}
+            class="mt-0.5 shrink-0 text-[var(--color-brand-500)]"
+            aria-hidden="true"
+          />
           <span>
-            Need a smaller web asset? Export a separate WebP copy when your destination supports it—this {item.format?.toUpperCase()} stays unchanged.
+            Need a smaller web asset? Export a separate WebP copy when your
+            destination supports it—this {item.format?.toUpperCase()} stays unchanged.
           </span>
           <button
             type="button"
@@ -199,7 +235,7 @@
               <FolderOpen size={13} aria-hidden="true" />
               Show WebP copy
             {:else}
-              {exporting_webp ? 'Creating…' : 'Create WebP copy'}
+              {exporting_webp ? "Creating…" : "Create WebP copy"}
             {/if}
           </button>
         </div>
@@ -207,7 +243,7 @@
     </div>
 
     <!-- Cancel button -->
-    {#if item.status === 'pending' || item.status === 'running'}
+    {#if item.status === "pending" || item.status === "running"}
       <button
         type="button"
         class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-danger)]"
@@ -221,7 +257,9 @@
 
   {#if expanded && item.candidates_log && item.candidates_log.length > 0}
     <div class="mt-3 space-y-1.5 border-t border-[var(--color-border)] pt-3">
-      <p class="text-[11px] font-medium tracking-wide text-[var(--color-muted-foreground)] uppercase">
+      <p
+        class="text-[11px] font-medium tracking-wide text-[var(--color-muted-foreground)] uppercase"
+      >
         Engine log
       </p>
       <ul class="space-y-1 text-xs">
@@ -235,10 +273,14 @@
               {/if}
               <span class="font-medium">{log.engine}</span>
             </span>
-            <span class="flex items-center gap-3 font-mono tabular-nums text-[var(--color-muted-foreground)]">
+            <span
+              class="flex items-center gap-3 font-mono tabular-nums text-[var(--color-muted-foreground)]"
+            >
               <span>{format_bytes(log.output_bytes)}</span>
               {#if log.dssim !== null}
-                <span class="text-[10px]">visual difference {log.dssim.toFixed(4)}</span>
+                <span class="text-[10px]"
+                  >visual difference {log.dssim.toFixed(4)}</span
+                >
               {/if}
             </span>
           </li>

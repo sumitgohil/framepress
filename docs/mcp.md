@@ -33,17 +33,17 @@ On macOS, closing the FramePress window keeps the app available in the menu bar.
 
 FramePress speaks plain MCP — any client that posts a bearer token to the local endpoint works. The Settings dropdown emits a snippet shaped the way each client expects:
 
-| Client | Config file | Snippet shape |
-| --- | --- | --- |
-| OpenCode | `opencode` config | `{ $schema, mcp: { framepress: { type: "remote", enabled, url, headers } } }` |
-| Claude Desktop | `claude_desktop_config.json` | `{ mcpServers: { framepress: { url, headers } } }` |
-| Claude Code | `.mcp.json` (project) or `~/.claude.json` | `{ mcpServers: { framepress: { type: "http", url, headers } } }` |
-| Cursor | `~/.cursor/mcp.json` | `{ mcpServers: { framepress: { url, headers } } }` |
-| VS Code (GitHub Copilot) | `.vscode/mcp.json` | `{ servers: { framepress: { type: "http", url, headers } } }` |
-| Zed | `~/.config/zed/settings.json` | `{ mcp_servers: { framepress: { url, headers } } }` |
-| Codex CLI | `~/.codex/config.toml` | `[mcp_servers.framepress]` table with `url` and `bearer_token` |
-| Goose | `~/.config/goose/config.yaml` | `extensions.framepress` with `type: streamable_http`, `url`, `bearer_token` |
-| Other `mcpServers` client | varies | `{ mcpServers: { framepress: { url, headers } } }` |
+| Client                    | Config file                               | Snippet shape                                                                 |
+| ------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------- |
+| OpenCode                  | `opencode` config                         | `{ $schema, mcp: { framepress: { type: "remote", enabled, url, headers } } }` |
+| Claude Desktop            | `claude_desktop_config.json`              | `{ mcpServers: { framepress: { url, headers } } }`                            |
+| Claude Code               | `.mcp.json` (project) or `~/.claude.json` | `{ mcpServers: { framepress: { type: "http", url, headers } } }`              |
+| Cursor                    | `~/.cursor/mcp.json`                      | `{ mcpServers: { framepress: { url, headers } } }`                            |
+| VS Code (GitHub Copilot)  | `.vscode/mcp.json`                        | `{ servers: { framepress: { type: "http", url, headers } } }`                 |
+| Zed                       | `~/.config/zed/settings.json`             | `{ mcp_servers: { framepress: { url, headers } } }`                           |
+| Codex CLI                 | `~/.codex/config.toml`                    | `[mcp_servers.framepress]` table with `url` and `bearer_token`                |
+| Goose                     | `~/.config/goose/config.yaml`             | `extensions.framepress` with `type: streamable_http`, `url`, `bearer_token`   |
+| Other `mcpServers` client | varies                                    | `{ mcpServers: { framepress: { url, headers } } }`                            |
 
 For OpenCode, the snippet has this shape. The `type: "remote"` field is required for OpenCode to register FramePress as MCP tools rather than treating its URL as an ordinary endpoint.
 

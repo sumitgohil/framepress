@@ -1,11 +1,18 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { Home, List, Clock, Settings, Layers, ChartNoAxesCombined } from 'lucide-svelte';
-  import { cn } from '$lib/utils/cn';
-  import { queue } from '$lib/stores/queue.svelte';
-  import { statistics } from '$lib/stores/statistics.svelte';
-  import { format_bytes } from '$lib/utils/format';
-  import SavingsSparkline from './SavingsSparkline.svelte';
+  import { page } from "$app/stores";
+  import {
+    Home,
+    List,
+    Clock,
+    Settings,
+    Layers,
+    ChartNoAxesCombined,
+  } from "lucide-svelte";
+  import { cn } from "$lib/utils/cn";
+  import { queue } from "$lib/stores/queue.svelte";
+  import { statistics } from "$lib/stores/statistics.svelte";
+  import { format_bytes } from "$lib/utils/format";
+  import SavingsSparkline from "./SavingsSparkline.svelte";
 
   type NavItem = {
     href: string;
@@ -16,17 +23,17 @@
 
   let nav_items: NavItem[] = $derived.by(() => {
     const items: NavItem[] = [
-      { href: '/', label: 'Dashboard', icon: Home },
-      { href: '/queue', label: 'Queue', icon: List, badge: queue.active_count },
-      { href: '/history', label: 'History', icon: Clock },
-      { href: '/statistics', label: 'Statistics', icon: ChartNoAxesCombined },
-      { href: '/settings', label: 'Settings', icon: Settings },
+      { href: "/", label: "Dashboard", icon: Home },
+      { href: "/queue", label: "Queue", icon: List, badge: queue.active_count },
+      { href: "/history", label: "History", icon: Clock },
+      { href: "/statistics", label: "Statistics", icon: ChartNoAxesCombined },
+      { href: "/settings", label: "Settings", icon: Settings },
     ];
     return items;
   });
 
   let is_active = (href: string) => {
-    if (href === '/') return $page.url.pathname === '/';
+    if (href === "/") return $page.url.pathname === "/";
     return $page.url.pathname.startsWith(href);
   };
 </script>
@@ -38,7 +45,7 @@
   <!-- Brand -->
   <div class="flex items-center gap-3 px-2 py-2">
     <img
-      class="h-11 w-11 rounded-xl object-cover "
+      class="h-11 w-11 rounded-xl object-cover"
       src="/images/framepress-logo.png"
       alt="FramePress logo"
     />
@@ -52,12 +59,12 @@
       {@const active = is_active(item.href)}
       <a
         href={item.href}
-        aria-current={active ? 'page' : undefined}
+        aria-current={active ? "page" : undefined}
         class={cn(
-          'group flex h-11 items-center justify-between gap-2 rounded-xl px-3 text-[15px] font-medium transition-colors',
+          "group flex h-11 items-center justify-between gap-2 rounded-xl px-3 text-[15px] font-medium transition-colors",
           active
-            ? 'bg-[var(--color-brand-500)]/10 text-[var(--color-brand-600)] dark:text-[var(--color-brand-300)]'
-            : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]',
+            ? "bg-[var(--color-brand-500)]/10 text-[var(--color-brand-600)] dark:text-[var(--color-brand-300)]"
+            : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]",
         )}
       >
         <span class="flex items-center gap-2.5">
@@ -80,9 +87,15 @@
   <div class="glass mt-auto flex flex-col gap-3 rounded-2xl p-4">
     <div class="flex items-end justify-between gap-2">
       <div>
-        <p class="text-xs font-medium text-[var(--color-muted-foreground)]">Today's Savings</p>
+        <p class="text-xs font-medium text-[var(--color-muted-foreground)]">
+          Today's Savings
+        </p>
         <p class="mt-1 text-xl font-semibold tabular-nums tracking-tight">
-          {statistics.summary ? format_bytes(statistics.summary.today_savings_bytes) : statistics.loading ? '…' : '—'}
+          {statistics.summary
+            ? format_bytes(statistics.summary.today_savings_bytes)
+            : statistics.loading
+              ? "…"
+              : "—"}
         </p>
       </div>
       {#if (statistics.summary?.today_optimized_count ?? 0) > 0}
@@ -91,12 +104,22 @@
     </div>
     <div class="h-px bg-[var(--color-border)]"></div>
     <div>
-      <p class="text-xs font-medium text-[var(--color-muted-foreground)]">Images Optimized Today</p>
+      <p class="text-xs font-medium text-[var(--color-muted-foreground)]">
+        Images Optimized Today
+      </p>
       <p class="mt-1 text-xl font-semibold tabular-nums tracking-tight">
-        {statistics.summary ? statistics.summary.today_optimized_count.toLocaleString() : statistics.loading ? '…' : '—'}
+        {statistics.summary
+          ? statistics.summary.today_optimized_count.toLocaleString()
+          : statistics.loading
+            ? "…"
+            : "—"}
       </p>
       <p class="mt-0.5 text-[11px] text-[var(--color-muted-foreground)]">
-        {statistics.summary ? `${statistics.summary.total_optimized_count.toLocaleString()} total` : statistics.unavailable ? 'Statistics unavailable' : 'lifetime'}
+        {statistics.summary
+          ? `${statistics.summary.total_optimized_count.toLocaleString()} total`
+          : statistics.unavailable
+            ? "Statistics unavailable"
+            : "lifetime"}
       </p>
     </div>
     <a

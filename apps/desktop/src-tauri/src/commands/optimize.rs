@@ -142,51 +142,6 @@ pub async fn optimize_paths(
     Ok(ids)
 }
 
-#[cfg(test)]
-mod tests {
-    use std::fs;
-    use std::path::Path;
-
-    use super::{expand_image_paths, webp_copy_output_path};
-
-    #[test]
-    fn expands_nested_folders_and_skips_unsupported_or_generated_files() {
-        let dir = tempfile::tempdir().unwrap();
-        let nested = dir.path().join("nested");
-        fs::create_dir(&nested).unwrap();
-
-        let top_level = dir.path().join("cover.PNG");
-        let nested_image = nested.join("photo.jpeg");
-        fs::write(&top_level, []).unwrap();
-        fs::write(&nested_image, []).unwrap();
-        fs::write(dir.path().join("notes.txt"), []).unwrap();
-        fs::write(nested.join("photo-framepress.webp"), []).unwrap();
-
-        let paths = expand_image_paths([dir.path().to_path_buf()]).unwrap();
-
-        assert_eq!(paths, vec![top_level, nested_image]);
-    }
-
-    #[test]
-    fn de_duplicates_files_selected_directly_and_through_a_folder() {
-        let dir = tempfile::tempdir().unwrap();
-        let image = dir.path().join("cover.png");
-        fs::write(&image, []).unwrap();
-
-        let paths = expand_image_paths([dir.path().to_path_buf(), image.clone()]).unwrap();
-
-        assert_eq!(paths, vec![image]);
-    }
-
-    #[test]
-    fn webp_copy_path_is_a_sibling_with_a_webp_extension() {
-        assert_eq!(
-            webp_copy_output_path(Path::new("/images/banner.png")),
-            Path::new("/images/banner-framepress.webp")
-        );
-    }
-}
-
 /// Cancel a queued or running job.
 pub async fn cancel_job(job_id: String, ctx: &AppContext) -> Result<(), String> {
     ctx.queue().cancel(&job_id);
@@ -341,4 +296,49 @@ fn spawn_queue_poller(
             tokio::time::sleep(std::time::Duration::from_millis(150)).await;
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use std::path::Path;
+
+    use super::{expand_image_paths, webp_copy_output_path};
+
+    #[test]
+    fn expands_nested_folders_and_skips_unsupported_or_generated_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let nested = dir.path().join("nested");
+        fs::create_dir(&nested).unwrap();
+
+        let top_level = dir.path().join("cover.PNG");
+        let nested_image = nested.join("photo.jpeg");
+        fs::write(&top_level, []).unwrap();
+        fs::write(&nested_image, []).unwrap();
+        fs::write(dir.path().join("notes.txt"), []).unwrap();
+        fs::write(nested.join("photo-framepress.webp"), []).unwrap();
+
+        let paths = expand_image_paths([dir.path().to_path_buf()]).unwrap();
+
+        assert_eq!(paths, vec![top_level, nested_image]);
+    }
+
+    #[test]
+    fn de_duplicates_files_selected_directly_and_through_a_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        let image = dir.path().join("cover.png");
+        fs::write(&image, []).unwrap();
+
+        let paths = expand_image_paths([dir.path().to_path_buf(), image.clone()]).unwrap();
+
+        assert_eq!(paths, vec![image]);
+    }
+
+    #[test]
+    fn webp_copy_path_is_a_sibling_with_a_webp_extension() {
+        assert_eq!(
+            webp_copy_output_path(Path::new("/images/banner.png")),
+            Path::new("/images/banner-framepress.webp")
+        );
+    }
 }

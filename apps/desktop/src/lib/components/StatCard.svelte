@@ -12,10 +12,7 @@
   let { label, value, hint }: Props = $props();
 </script>
 
-<div
-  class="flex flex-col gap-1"
-  aria-label={label}
->
+<div class="flex flex-col gap-1" aria-label={label}>
   <span class="text-sm font-medium text-[var(--color-muted-foreground)]">
     {label}
   </span>

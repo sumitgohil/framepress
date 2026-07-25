@@ -57,7 +57,7 @@ impl QueueProcessor {
         let workers = Arc::new(Mutex::new(std::collections::HashMap::new()));
         let worker_started = Arc::new(AtomicBool::new(false));
 
-        let proc = Self {
+        Self {
             optimizer,
             history: None,
             state,
@@ -67,9 +67,7 @@ impl QueueProcessor {
             workers,
             worker_started,
             max_concurrency: DEFAULT_MAX_CONCURRENCY,
-        };
-
-        proc
+        }
     }
 
     /// Start the queue worker. This must be called while a Tokio runtime is

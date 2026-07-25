@@ -1,4 +1,4 @@
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 /**
  * Svelte action: makes the host element a draggable titlebar region.
@@ -24,7 +24,7 @@ export function draggable_titlebar(node: HTMLElement) {
       if (cur instanceof HTMLTextAreaElement) return true;
       if (cur instanceof HTMLSelectElement) return true;
       if (cur.isContentEditable) return true;
-      if (cur.dataset?.noDrag === '') return true;
+      if (cur.dataset?.noDrag === "") return true;
       cur = cur.parentElement;
     }
     return false;
@@ -41,13 +41,13 @@ export function draggable_titlebar(node: HTMLElement) {
   };
 
   // Also stop the default browser drag-image/selection on the region.
-  node.style.setProperty('-webkit-user-select', 'none');
-  node.style.setProperty('user-select', 'none');
+  node.style.setProperty("-webkit-user-select", "none");
+  node.style.setProperty("user-select", "none");
 
-  node.addEventListener('mousedown', on_mouse_down, true);
+  node.addEventListener("mousedown", on_mouse_down, true);
   return {
     destroy() {
-      node.removeEventListener('mousedown', on_mouse_down, true);
+      node.removeEventListener("mousedown", on_mouse_down, true);
     },
   };
 }

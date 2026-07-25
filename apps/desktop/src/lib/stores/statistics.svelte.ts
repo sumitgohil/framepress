@@ -1,7 +1,11 @@
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
-import { analyticsSnapshot, statsSnapshot } from '$lib/ipc/commands';
-import type { AnalyticsSnapshot, QueueItem, StatsSnapshot } from '$lib/ipc/types';
+import { analyticsSnapshot, statsSnapshot } from "$lib/ipc/commands";
+import type {
+  AnalyticsSnapshot,
+  QueueItem,
+  StatsSnapshot,
+} from "$lib/ipc/types";
 
 function create_statistics_store() {
   let summary = $state<StatsSnapshot | null>(null);
@@ -14,7 +18,10 @@ function create_statistics_store() {
 
   async function refresh() {
     try {
-      const [next_summary, next_weekly] = await Promise.all([statsSnapshot(), analyticsSnapshot('7d')]);
+      const [next_summary, next_weekly] = await Promise.all([
+        statsSnapshot(),
+        analyticsSnapshot("7d"),
+      ]);
       summary = next_summary;
       weekly = next_weekly;
       unavailable = false;
@@ -33,8 +40,11 @@ function create_statistics_store() {
   async function init() {
     if (initialising) return initialising;
     initialising = (async () => {
-      unlisten = await listen<QueueItem>('queue:item_updated', (event) => {
-        if (event.payload.status === 'completed' || event.payload.status === 'failed') {
+      unlisten = await listen<QueueItem>("queue:item_updated", (event) => {
+        if (
+          event.payload.status === "completed" ||
+          event.payload.status === "failed"
+        ) {
           refresh_after_completion();
         }
       });
@@ -54,10 +64,18 @@ function create_statistics_store() {
   }
 
   return {
-    get summary() { return summary; },
-    get weekly() { return weekly; },
-    get loading() { return loading; },
-    get unavailable() { return unavailable; },
+    get summary() {
+      return summary;
+    },
+    get weekly() {
+      return weekly;
+    },
+    get loading() {
+      return loading;
+    },
+    get unavailable() {
+      return unavailable;
+    },
     init,
     refresh,
     dispose,

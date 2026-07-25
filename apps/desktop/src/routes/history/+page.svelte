@@ -1,13 +1,16 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { Clock } from 'lucide-svelte';
+  import { onMount } from "svelte";
+  import { Clock } from "lucide-svelte";
 
-  import HistoryRow from '$lib/components/HistoryRow.svelte';
-  import Toaster from '$lib/components/Toaster.svelte';
+  import HistoryRow from "$lib/components/HistoryRow.svelte";
+  import Toaster from "$lib/components/Toaster.svelte";
 
-  import { recentHistory, statsSnapshot } from '$lib/ipc/commands';
-  import type { HistoryRow as HistoryRowData, StatsSnapshot } from '$lib/ipc/types';
-  import { format_bytes } from '$lib/utils/format';
+  import { recentHistory, statsSnapshot } from "$lib/ipc/commands";
+  import type {
+    HistoryRow as HistoryRowData,
+    StatsSnapshot,
+  } from "$lib/ipc/types";
+  import { format_bytes } from "$lib/utils/format";
 
   let rows = $state<HistoryRowData[]>([]);
   let stats = $state<StatsSnapshot | null>(null);
@@ -34,19 +37,25 @@
     {#if stats}
       <p class="text-sm text-[var(--color-muted-foreground)]">
         {stats.total_optimized_count.toLocaleString()} total · saved
-        <span class="font-medium text-[var(--color-success)]">{format_bytes(stats.today_savings_bytes)}</span> today
-        · avg
+        <span class="font-medium text-[var(--color-success)]"
+          >{format_bytes(stats.today_savings_bytes)}</span
+        >
+        today · avg
         <span class="font-mono">{stats.average_savings_pct.toFixed(0)}%</span>
       </p>
     {/if}
   </header>
 
   {#if loading}
-    <div class="glass flex items-center justify-center gap-3 rounded-2xl p-10 text-sm text-[var(--color-muted-foreground)]">
+    <div
+      class="glass flex items-center justify-center gap-3 rounded-2xl p-10 text-sm text-[var(--color-muted-foreground)]"
+    >
       Loading…
     </div>
   {:else if rows.length === 0}
-    <div class="glass flex flex-col items-center gap-3 rounded-2xl p-12 text-center">
+    <div
+      class="glass flex flex-col items-center gap-3 rounded-2xl p-12 text-center"
+    >
       <div
         class="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
         aria-hidden="true"

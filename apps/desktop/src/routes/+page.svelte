@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+  import { onMount, onDestroy } from "svelte";
+  import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
-  import DropZone from '$lib/components/DropZone.svelte';
-  import PresetSelector from '$lib/components/PresetSelector.svelte';
-  import RecentOptimizations from '$lib/components/RecentOptimizations.svelte';
-  import Toaster from '$lib/components/Toaster.svelte';
+  import DropZone from "$lib/components/DropZone.svelte";
+  import PresetSelector from "$lib/components/PresetSelector.svelte";
+  import RecentOptimizations from "$lib/components/RecentOptimizations.svelte";
+  import Toaster from "$lib/components/Toaster.svelte";
 
-  import { optimizePaths, recentHistory } from '$lib/ipc/commands';
-  import type { ActivityRow, HistoryRow, QueueItem } from '$lib/ipc/types';
-  import { queue } from '$lib/stores/queue.svelte';
-  import { settings } from '$lib/stores/settings.svelte';
-  import { toast } from '$lib/stores/toast.svelte';
+  import { optimizePaths, recentHistory } from "$lib/ipc/commands";
+  import type { ActivityRow, HistoryRow, QueueItem } from "$lib/ipc/types";
+  import { queue } from "$lib/stores/queue.svelte";
+  import { settings } from "$lib/stores/settings.svelte";
+  import { toast } from "$lib/stores/toast.svelte";
 
   let recent = $state<HistoryRow[]>([]);
   let enqueuing = $state(false);
@@ -67,14 +67,15 @@
     const active = queue.items
       .filter(
         (item) =>
-          (item.status === 'pending' || item.status === 'running') &&
-          item.source === 'Desktop',
+          (item.status === "pending" || item.status === "running") &&
+          item.source === "Desktop",
       )
       .map(queue_to_activity);
     const finished = recent.map(history_to_activity);
     // Pending queue items have `started_at: null`; sort them ahead of older
     // rows so they appear at the top of the feed.
-    const started = (row: ActivityRow) => row.started_at ?? Number.MAX_SAFE_INTEGER;
+    const started = (row: ActivityRow) =>
+      row.started_at ?? Number.MAX_SAFE_INTEGER;
     return [...active, ...finished].sort((a, b) => started(b) - started(a));
   });
 
@@ -101,11 +102,11 @@
     // Subscribe to queue transitions so the dashboard's "Recent Activity"
     // updates in real time when a job reaches a terminal state — matching the
     // behaviour of the Queue and Statistics stores.
-    unlisten = await listen<QueueItem>('queue:item_updated', (event) => {
+    unlisten = await listen<QueueItem>("queue:item_updated", (event) => {
       if (
-        event.payload.status === 'completed' ||
-        event.payload.status === 'failed' ||
-        event.payload.status === 'cancelled'
+        event.payload.status === "completed" ||
+        event.payload.status === "failed" ||
+        event.payload.status === "cancelled"
       ) {
         schedule_refresh();
       }
@@ -128,11 +129,11 @@
         preset: settings.value.default_preset,
       });
       toast.success(
-        `${ids.length} ${ids.length === 1 ? 'file' : 'files'} queued`,
-        'Open the Queue tab to track progress.',
+        `${ids.length} ${ids.length === 1 ? "file" : "files"} queued`,
+        "Open the Queue tab to track progress.",
       );
     } catch (err) {
-      toast.error('Could not enqueue files', String(err));
+      toast.error("Could not enqueue files", String(err));
     } finally {
       enqueuing = false;
     }

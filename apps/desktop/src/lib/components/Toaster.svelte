@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { CheckCircle2, AlertCircle, Info, X } from 'lucide-svelte';
+  import { CheckCircle2, AlertCircle, Info, X } from "lucide-svelte";
 
-  import { toast, type Toast } from '$lib/stores/toast.svelte';
+  import { toast, type Toast } from "$lib/stores/toast.svelte";
 
   function icon_for(t: Toast) {
-    if (t.variant === 'success') return CheckCircle2;
-    if (t.variant === 'error') return AlertCircle;
+    if (t.variant === "success") return CheckCircle2;
+    if (t.variant === "error") return AlertCircle;
     return Info;
   }
 </script>
@@ -30,17 +30,19 @@
         <Icon
           size={18}
           strokeWidth={2}
-          class={t.variant === 'success'
-            ? 'text-[var(--color-success)]'
-            : t.variant === 'error'
-              ? 'text-[var(--color-danger)]'
-              : 'text-[var(--color-info)]'}
+          class={t.variant === "success"
+            ? "text-[var(--color-success)]"
+            : t.variant === "error"
+              ? "text-[var(--color-danger)]"
+              : "text-[var(--color-info)]"}
         />
       </span>
       <div class="flex-1 space-y-0.5">
         <p class="text-sm font-semibold leading-snug">{t.title}</p>
         {#if t.description}
-          <p class="text-xs text-[var(--color-muted-foreground)]">{t.description}</p>
+          <p class="text-xs text-[var(--color-muted-foreground)]">
+            {t.description}
+          </p>
         {/if}
         {#if t.action}
           <button

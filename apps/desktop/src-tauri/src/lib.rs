@@ -142,10 +142,16 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
                     let should_start = !manager.status().await.running;
                     match manager.set_enabled(should_start).await {
                         Ok(status) => {
-                            let label = if status.running { "Stop MCP" } else { "Start MCP" };
+                            let label = if status.running {
+                                "Stop MCP"
+                            } else {
+                                "Start MCP"
+                            };
                             let _ = menu_item.set_text(label);
                         }
-                        Err(error) => tracing::warn!(%error, "could not toggle MCP server from menu bar"),
+                        Err(error) => {
+                            tracing::warn!(%error, "could not toggle MCP server from menu bar")
+                        }
                     }
                 });
             }
@@ -160,7 +166,11 @@ fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         let status = app.state::<AppContext>().agent_access().status().await;
-        let _ = toggle_mcp.set_text(if status.running { "Stop MCP" } else { "Start MCP" });
+        let _ = toggle_mcp.set_text(if status.running {
+            "Stop MCP"
+        } else {
+            "Start MCP"
+        });
     });
     Ok(())
 }

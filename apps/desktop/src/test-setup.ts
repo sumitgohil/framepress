@@ -5,4 +5,4 @@
  * globally available, and forces the jsdom environment to be ready before
  * components mount.
  */
-import '@testing-library/svelte/vitest';
+import "@testing-library/svelte/vitest";
